@@ -6,18 +6,18 @@
             <div class="inline-block min-w-full align-middle bg-slate-50 dark:bg-gray-800">
                 <div class="overflow-hidden text-lg px-3 mt-3">
                     <!-- 제목 : {{ noticeT[0] ? noticeT[0].title:'' }} -->
-                    <!-- 제목 : {{$route.params.title}} -->
-                    [공지사항] {{ noticeT[0]['notice_title'] }}
+                    <!-- 제목 : {{$route.params.title}} {{ noticeT['notice_title'] }} -->
+                    [공지사항]  {{ rowInfo.notice_title }}
                 </div>
                 <div class="flex space-x-7 text-xs p-3 border-b-2 text-slate-500">
                     <div>
-                        <font-awesome-icon :icon="['far', 'user']" class="text-slate-500" /> {{ noticeT[0]['notice_writer'] }}
+                        <font-awesome-icon :icon="['far', 'user']" class="text-slate-500" /> {{ rowInfo.notice_writer }}
                     </div>
                     <div>
-                        <font-awesome-icon :icon="['far', 'clock']" class="text-slate-500" /> {{ noticeT[0]['notice_date'] }}
+                        <font-awesome-icon :icon="['far', 'clock']" class="text-slate-500" /> {{ rowInfo.notice_date }}
                     </div>
                     <div>
-                        <font-awesome-icon :icon="['far', 'eye']" class="text-slate-500" /> {{ noticeT[0]['notice_hit'] }}
+                        <font-awesome-icon :icon="['far', 'eye']" class="text-slate-500" /> {{ rowInfo.notice_hit }}
                     </div>
                 </div>
 
@@ -25,7 +25,8 @@
 
             <!-- 내용 -->
             <div class="bg-white p-5 min-h-[300px]">
-                {{ noticeT[0]['notice_content'] }} <br><br>
+                {{ rowInfo.notice_content }}
+                <!-- {{ noticeT[0]['notice_content'] }} -->
                 <!-- {{ $route.params.content }} <br><br>
                  {{ $route.params.writer }} -->
             </div>
@@ -59,48 +60,61 @@
 <script>
 import http from '../modules/http';
 import { useRouter, useRoute} from 'vue-router';
-import { watch, reactive, ref, readonly, onMounted } from 'vue';
+import { watch, reactive, ref, readonly, onMounted, toRefs, computed } from 'vue';
 
 export default {
     name: 'noticeContent',
+    // props: {
+    //     rowInfo: {
+    //         type: Object,
+    //         default: ()=>{   //type이 Object이면 반드시 리턴함수를 적어야함.
+    //             return {}
+    //         }
+    //     },
+    // },
+    props: ['rowInfo'],
 
-    setup () {
+    setup (props) { //setup에 props가 전달되면 setup내에서 props는 readonly이며 컴포넌트는 반응형 변수에 반응하지않는다. watch로 변화된 값을 감지하여 메소드로 직접 값을 대입시켜줘야한다.
         const route = useRoute();
         // const router = useRouter();
-        const noticeT = ref([{}]);      
+        const noticeT = ref(props.rowInfo);
         //미리 들어올 데이터 타입에 맞는 구조가 있어야 undefined 가 안뜬다. 만약, 들어올 데이터가 [{}] 이렇게 배열안에 객체나 배열이라면?
         //ref 안에 초기화할때도 저렇게 데이터객체를 만들어놔야 데이터가 적합한 곳에 들어간다. 들어갈 공간구조가 할당되어 있지 않으면 당연히 undefined..
 
-        console.log("router::: " , route.query.notice_no);
-        http.get('/home/noticeContent', {
-            params: {
-                // no: route.params.no, //params로 받을때는 params로 query로 받을땐 query로 받음. 둘의 구별 필요.
-                notice_no: route.query.notice_no,     //query방식의 장점 : params는 새로고침시 데이터가 날라간다는 말이 있지만, query는 url에 데이터가 있어서 안날라간단다..
-                // content : route.query.content
-            }
-        }).then(res => {
-            console.log('NoticeContent res.data: ', res.data);
-            noticeT.value = res.data;
-            console.log('NoticeContent noticeT.value: ', noticeT.value);
-        }).catch((err) => {
-            console.error('NoticeContent err: ', err);
-        })
+        // console.log("router::: " , route.query.notice_no);
+        // http.get('/home/noticeContent', {
+        //     params: {
+        //         // no: route.params.no, //params로 받을때는 params로 query로 받을땐 query로 받음. 둘의 구별 필요.
+        //         notice_no: route.query.notice_no,     //query방식의 장점 : params는 새로고침시 데이터가 날라간다는 말이 있지만, query는 url에 데이터가 있어서 안날라간단다..
+        //         // content : route.query.content
+        //     }
+        // }).then(res => {
+        //     console.log('NoticeContent res.data: ', res.data);
+        //     noticeT.value = res.data;
+        //     console.log('NoticeContent noticeT.value: ', noticeT.value);
+        // }).catch((err) => {
+        //     console.error('NoticeContent err: ', err);
+        // })
 
-        //라우트 인스턴스를 감시하여 uri의 parameter의 변화에 컴포넌트가 동적으로 반응하게 만듦
-        // watch(() => route.params , (newValue, oldValue) => {
-        //     console.log("watch->router::: " , route.params.no);
-        //      http.get('/home/noticeContent', {
-        //         params: {
-        //             no: newValue.no,
-        //             content : newValue.content
-        //         }
-        //     }).then(res => {
-        //         console.log('NoticeContent: watch->route: ', res.data);
-        //         noticeT.value = res.data;
-        //         console.log('NoticeContent watch->noticeT.value: ', noticeT.value);
-        //     }).catch((err) => {
-        //         console.error('NoticeContent: watch->route: err: ', err);
-        //     })
+        // 라우트 인스턴스를 감시하여 uri의 parameter의 변화에 컴포넌트가 동적으로 반응하게 만듦
+        // watch(() => props.rowInfo, (newValue, oldValue) => { 
+        //     console.log("watch->noticeT::: " , noticeT.value);
+        //     console.log("watch->noticeT:::new " , newValue);
+        //     console.log("watch->noticeT:::old " , oldValue);
+        //     noticeT.value = newValue;                        //이곳이 반응형 컴포넌트를 만들기 위해 props의 값을 감지하여 직접 대입시켜주는 부분이다!
+        //     // console.log("watch->router::: " , route.params.no);
+        //     //  http.get('/home/noticeContent', {
+        //     //     params: {
+        //     //         no: newValue.no,
+        //     //         content : newValue.content
+        //     //     }
+        //     // }).then(res => {
+        //     //     console.log('NoticeContent: watch->route: ', res.data);
+        //     //     noticeT.value = res.data;
+        //     //     console.log('NoticeContent watch->noticeT.value: ', noticeT.value);
+        //     // }).catch((err) => {
+        //     //     console.error('NoticeContent: watch->route: err: ', err);
+        //     // })
         //     }, { immediate: true, deep: true
         // })
 
