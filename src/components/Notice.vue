@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col w-full px-0">
         <div class="overflow-x-auto shadow-md sm:rounded-md mt-10">
-            <NoticeContent v-if="showed"></NoticeContent>
+            <NoticeContent v-if="showed" :rowInfo="rowInfo"></NoticeContent>
             <!-- 본문 -->
             <div class="inline-block min-w-full align-middle dark:bg-gray-800">
                 <div class="overflow-hidden">
@@ -105,7 +105,7 @@
 
 
 <script>
-import { inject, ref } from "vue";
+import { inject, onMounted, ref } from "vue";
 import http from '../modules/http.js';
 import { useRouter } from 'vue-router';
 import NoticeContent from './NoticeContent.vue'
@@ -123,12 +123,19 @@ export default {
 
         //공지글 상세페이지부분
         const showed = ref(false);
+        const rowInfo = ref({});
         
         //라우터로 글 클릭시 이동
+        // const rowClicked = (item) => {
+        //     router.push({ name : 'noticeContent', query : { notice_no: item.notice_no } });
+        // }
         const rowClicked = (item) => {
-            router.push({ name : 'noticeContent', query : { notice_no: item.notice_no } });
+            console.log('rowClicked : ', item);
+            showed.value = true;
+            rowInfo.value = item;
         }
-        
+
+
         //글목록 서버에서 불러오기
         // const http = inject('http');  //작동은 하는데 ide에서 툴팁이 작동을 안해서 디버깅이 어렵네..
         http.get('/home/notice').then(res => {
@@ -157,7 +164,7 @@ export default {
 
         return{
             noticeT, noticeSearch, searchWord, noticeSearchType, rowClicked,
-            showed
+            showed, rowInfo
         }
     }
 
