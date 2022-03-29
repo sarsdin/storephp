@@ -1,0 +1,15 @@
+// tsconfig.json
+{
+    "exclude": [
+        "ci","dist"
+    ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    // "allowJs": true,
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }    
+  }
+}
