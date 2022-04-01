@@ -3,6 +3,7 @@ import header from '../components/Header.vue'
 import notice from '../components/Notice.vue'
 import noticeContent from '../components/NoticeContent.vue'
 import notice2 from '../components/Notice2.vue'
+import noticeCU from '../components/NoticeCU.vue'
 import login from "../components/Login.vue";
 import join from "../components/Join.vue";
 import contentholder from "../components/Contentholder.vue";
@@ -14,41 +15,48 @@ const routes = [
         path: '/',
         component: Home,        // default <router-view> - name속성이 없으면 자동으로 default로 지정됨.
         name: 'home',
-        redirect:{name : 'contentholder'},
+        // redirect:{name : 'contentholder'},
         children: [{
                 path:'',
-                components: { notice : contentholder }, 
+                components: { home : contentholder }, 
                 // notice라는 이름의 <router-view>를 컴포넌트로 가진다. 그리고, 거기에 import된 contentholder라는 vue를 보여준다.
                 name:'contentholder'
             },
             {
                 path:'notice',
-                components: { notice : notice },
-                name:'notice'
+                components: { home : notice },
+                name:'notice',
+                children: [
+                    {
+                        // path:'noticeContent/:no/content/:content', //이동할 때 그 row의 글번호 데이터를 파라미터로 받아서 noticeContent에서 $router.params.no 로 사용가능!
+                        path:'noticeContent',
+                        components: { noticeContent : noticeContent },
+                        name:'noticeContent',
+                        props:true  
+                        //params로 데이터를 넘길때는 props를 true로 두면 컴포넌트에 데이터가 props로도 전달된다.
+                        //path의 /:tmp 이런 :파라미터로 넘어온 값만 해당. 그럼 해당 컴포넌트에서 props: ['tmp'] 형태로 로드가능.
+                    }
+                ]
             },
             {
                 path:'addproduct',
-                components: { notice : addproduct },
+                components: { home : addproduct },
                 name: 'addproduct'
             },
             {
-                // path:'noticeContent/:no/content/:content', //이동할 때 그 row의 글번호 데이터를 파라미터로 받아서 noticeContent에서 $router.params.no 로 사용가능!
-                path:'noticeContent',
-                components: { notice : noticeContent },
-                name:'noticeContent',
-                props:true      //params로 데이터를 넘길때는 props를 true로 두면 컴포넌트에 데이터가 props로도 전달된다.
-            }
+                path: 'noticeCU',
+                name: 'noticeCU',
+                components:{
+                    // default: ()=> import('../components/Header.vue'),
+                    home : noticeCU
+                },
+                props:true
+            },
+            
         ],
         props:true
     },
-    // {
-    //     path: '/notice',
-    //     name: 'notice',
-    //     components:{
-    //         default: ()=> import('../components/Header.vue'),
-    //         notice
-    //     }
-    // },
+ 
     {
         path: '/test/test2',
         name: 'notice2',

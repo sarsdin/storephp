@@ -1,15 +1,20 @@
 // tsconfig.json
 {
     "exclude": [
-        "ci","dist"
+        "ci","dist", 
+        // "postcss.config.js", 
+        // "tailwind.config.js",
+        // "vite.config.js",
+        // "src/*"
     ],
-  "compilerOptions": {
-    "baseUrl": ".",
-    // "allowJs": true,
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    }    
-  }
+    "compilerOptions": {
+        "baseUrl": ".",
+        "outDir": "dist",   //출력옵션을 주고 exclude에서 출력폴더를 제외시키면 rewrite오류 사라짐
+        "allowJs": true,
+        "paths": {
+            "@/*": [
+                "src/*"
+            ]
+        }
+    }
 }

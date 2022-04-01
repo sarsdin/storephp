@@ -7,7 +7,7 @@
         <!-- 컨텐츠 -->
         <div class="flex-1 flex flex-col sm:flex-row">
             <main class="w-full flex flex-wrap bg-white">
-                <router-view name="notice" v-bind:it="items"></router-view>
+                <router-view name="home" :key="$route.fullPath" v-bind:it="items"></router-view>
                 <!-- <Notice v-if="topIcon == 'notice'"></Notice> -->
                 <!-- <Contentholder v-else-if="topIcon == 'content'" v-for="item in items" v-bind:key="item.name" v-bind:item="item"/> -->
             </main>

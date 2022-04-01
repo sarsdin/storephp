@@ -1,7 +1,9 @@
 <template>
     <div class="flex flex-col w-full px-0">
         <div class="overflow-x-auto shadow-md sm:rounded-md mt-10">
-            <NoticeContent v-if="showed" :rowInfo="rowInfo"></NoticeContent>
+            <!-- <NoticeContent v-if="showed" :rowInfo="rowInfo"></NoticeContent> -->
+            <!-- :key="$route.fullPath"속성을 이용하여 새로고침한다. vue-router는 동일한 구성에 관해 변경사항인지가 안된단다? -->
+            <router-view name="noticeContent" v-if="$route.query != undefined" v-on:rowDeleted="rowDeleted(deletedRowNum)"></router-view>
             <!-- 본문 -->
             <div class="inline-block min-w-full align-middle dark:bg-gray-800">
                 <div class="overflow-hidden">
@@ -93,7 +95,7 @@
                     </svg>
                 </div>
                 <input v-model="noticeSearch" @keyup.enter="searchWord" type="text" id="table-search"
-                        class="block w-60 pl-10 p-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        class="block w-40 pl-10 p-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                         placeholder="검색어 입력">
             </div>
             
@@ -107,7 +109,7 @@
 <script>
 import { inject, onMounted, ref } from "vue";
 import http from '../modules/http.js';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import NoticeContent from './NoticeContent.vue'
 
 export default {
@@ -120,11 +122,16 @@ export default {
         let noticeSearch = ref(''); //글 검색창
         let noticeSearchType = ref('제목'); // 글검색종류
         const router = useRouter();
+        const route = useRoute();
 
         //공지글 상세페이지부분
         const showed = ref(false);
         const rowInfo = ref({});
-        
+        // const rowDeleted = () => {
+        //     showed.value = false;
+        // }
+
+
         //라우터로 글 클릭시 이동
         // const rowClicked = (item) => {
         //     router.push({ name : 'noticeContent', query : { notice_no: item.notice_no } });
@@ -133,7 +140,18 @@ export default {
             console.log('rowClicked : ', item);
             showed.value = true;
             rowInfo.value = item;
+
+            router.push({ name: 'noticeContent', query: {notice_no: item.notice_no}})
+            window.scrollTo({ top: 0, behavior: 'smooth'}); //글 클릭시 맨위로 가기 참고 - messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
         }
+
+        const rowDeleted = (deletedRowNum) => {
+            console.log('deletedRowNum :>> ', deletedRowNum);
+            // router.go(0)
+            
+            // window.location.reload();
+        }
+
 
 
         //글목록 서버에서 불러오기
@@ -154,16 +172,17 @@ export default {
                     noticeSearch : noticeSearch.value,
                     noticeSearchType : noticeSearchType.value
                 }
-            }).then(res => {
+            }).then( res => {
                 console.log('searchRes :>> ', res.data);
                 noticeT.value = res.data;
+                router.push({ name: 'noticeContent', query: { notice_no: route.query.notice_no, noticeSearch: noticeSearch.value }});
             })
         }
 
 
 
         return{
-            noticeT, noticeSearch, searchWord, noticeSearchType, rowClicked,
+            noticeT, noticeSearch, searchWord, noticeSearchType, rowClicked, rowDeleted,
             showed, rowInfo
         }
     }
