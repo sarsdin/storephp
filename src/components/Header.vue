@@ -40,27 +40,27 @@
                             공지사항
                         </router-link>
 
-                        <router-link v-if="userInfo.lstate.value == 'not'" :to="{name:'join'}" class="flex flex-col items-center text-xs">
+                        <router-link v-if="userInfo.lstate == 'not'" :to="{name:'join'}" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
                                 <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
                             </svg>
                             회원가입
                         </router-link>
-                        <router-link v-if="userInfo.lstate.value == 'not'" :to="{name:'login'}" class="flex flex-col items-center text-xs">
+                        <router-link v-if="userInfo.lstate == 'not'" :to="{name:'login'}" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd" />
                             </svg>
                             로그인
                         </router-link>
-                        <router-link v-if="userInfo.info.value.id == 'admin'" :to="{name:'addproduct'}" class="flex flex-col items-center text-xs">
+                        <router-link v-if="userInfo.info.id == 'admin'" :to="{name:'addproduct'}" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
                                 <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
                             </svg>
                             상품등록
                         </router-link>
-                        <a v-if="userInfo.lstate.value == 'logined'" @click="logout()" href="#" class="flex flex-col items-center text-xs">
+                        <a v-if="userInfo.lstate == 'logined'" @click="logout()" href="#" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />
                             </svg>
@@ -93,18 +93,21 @@
 import {inject, ref} from 'vue'
 import Megamenu from './Megamenu.vue';
 import { useRouter } from 'vue-router';
+import { useLoginStore } from '@/stores/login.js';
 
 export default {
     name: 'Header',
     components:{
         Megamenu
     },
-    inject: ["userInfo"],
+    // inject: ["userInfo"],
 
     setup(props) {
         const isVisible = ref(false);
         const router = useRouter();
-        const userInfo = inject('userInfo');
+        const userInfo = useLoginStore()    //전역 stroe
+        // const userInfo = inject('userInfo');
+        console.log('Header :>> ', userInfo);
 
         const showMenu = () => {
             console.log(isVisible.value);
@@ -121,13 +124,14 @@ export default {
             router.push('/');
         }
         const logout = () => {
-            userInfo.setLstate('not');
+            userInfo.setLstate('not'); //dev툴이나 vetur에서 인식을 못하는중
+            userInfo.setInfo('');
             router.go();
         }
         
 
         return {
-            showMenu, isVisible, logoClick, logout
+            showMenu, isVisible, logoClick, logout, userInfo
         }
     }
 }

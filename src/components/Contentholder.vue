@@ -93,7 +93,7 @@ import {ref, onMounted} from 'vue';
 export default {
     name: 'Contentholder',
     props:{
-        it :{ type: Array }
+        it :{ type: Array }  //Home items에서 넘어온 값
         // item:{
         //     name: String,
         //     price: Number,

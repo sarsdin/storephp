@@ -72,14 +72,15 @@ import { inject, ref, reactive, onMounted } from 'vue';
 import { login } from '../modules/auth.js';
 import {useRouter} from "vue-router";
 // import {router} from "../router/router";
-
+import { useLoginStore } from "@/stores/login";
 
 export default {
     name: "Login",
-    inject: ["userInfo"],
+    // inject: ["userInfo"],
 
     setup() {
-        let userInfo = inject("userInfo");
+        const userInfo = useLoginStore()
+        // let userInfo = inject("userInfo");
         let testdata = ref({
             name : '',
             type : '',
@@ -112,6 +113,7 @@ export default {
                     alert(res.msg);
                     userInfo.setLstate('logined');  //전역 로그인모듈 객체의 상태를 변경
                     userInfo.setInfo(userid.value); //마찬가지로 전역 객체에 유저id정보를 갱신
+
                     router.push('/');
 
                 } else if(res.error != undefined) { //error 속성이 존재하면 서버쪽에서 로그인이 실패한거라서 관련 실패메시지가 도착한다.
