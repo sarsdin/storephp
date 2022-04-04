@@ -36,7 +36,7 @@ const routes = [
                         //params로 데이터를 넘길때는 props를 true로 두면 컴포넌트에 데이터가 props로도 전달된다.
                         //path의 /:tmp 이런 :파라미터로 넘어온 값만 해당. 그럼 해당 컴포넌트에서 props: ['tmp'] 형태로 로드가능.
                     }
-                ]
+                ],
             },
             {
                 path:'addproduct',

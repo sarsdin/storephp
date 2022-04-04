@@ -14,5 +14,6 @@ export default {
 </script>
 
 <style>
+/* body{ font-family: 'sans-serif', 'Courier New', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode' } */
 
 </style>

@@ -142,6 +142,9 @@ export default {
             }
         })
 
+
+
+        // 글수정 버튼 클릭
         const updateClicked = () => {
             router.push({
                 name: 'noticeCU',
@@ -154,6 +157,8 @@ export default {
                 }
             })
         }
+
+        // 글삭제 버튼 클릭
         const deleteClicked = () => {
             const tORf = confirm('정말 삭제하시겠습니까?');
             if (tORf) {

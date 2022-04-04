@@ -1,12 +1,15 @@
 <template>
 
-<div class="flex flex-col w-full px-10">
+<div class="flex flex-col w-full px-0">
     <div class="mt-5">
-        등록:
+        <!-- 등록:
         <input type="text" placeholder="상품명" class="border-2">
         <input type="text" placeholder="가격" class="border-2">
-        <input type="text" placeholder="재고수" class="border-2">
-        <input type="button" value="등록하기" class="border-2">
+        <input type="text" placeholder="재고수" class="border-2"> -->
+        <input @click="addClicked = true" type="button" value="등록하기" class="p-1 border-2 rounded-md cursor-pointer focus:ring-1">
+        <ProductModal v-model="addClicked">
+            <ProductModalContent></ProductModalContent>
+        </ProductModal>
     </div>
     
     <div class="overflow-x-auto shadow-md sm:rounded-md mt-10">
@@ -18,28 +21,23 @@
                     <tr>
                         <th v-show="true" scope="col" class="p-4 w-12">
                             <div class="flex items-center">
-                                <input id="checkbox-search-all" type="checkbox"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <input id="checkbox-search-all" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                 <label for="checkbox-search-all" class="sr-only">checkbox</label>
                             </div>
                         </th>
                         <th scope="col" class="w-10 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
                             번호
                         </th>
-                        <th scope="col"
-                            class="py-3 px-3 w-1/6 text-ellipsis overflow-hidden whitespace-nowrap text-center text-xs font-medium tracking-wider text-gray-700 uppercase dark:text-gray-400">
+                        <th scope="col" class="py-3 px-3 w-1/6 text-ellipsis overflow-hidden whitespace-nowrap text-center text-xs font-medium tracking-wider text-gray-700 uppercase dark:text-gray-400">
                             카테고리
                         </th>
-                        <th scope="col"
-                            class="py-3 px-6 w-2/6 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
+                        <th scope="col" class="py-3 px-6 w-2/6 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
                             품명
                         </th>
-                        <th scope="col"
-                            class="py-3 px-6 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
+                        <th scope="col" class="py-3 px-6 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
                             재고
                         </th>
-                        <th scope="col"
-                            class="py-3 px-6 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
+                        <th scope="col" class="py-3 px-6 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
                             등록날짜
                         </th>
                         <th v-show="true" scope="col" class="py-3 px-6 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
@@ -109,48 +107,54 @@
 
 </div>    
 
-
 </template>
 
 <script>
 import { reactive, toRefs, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import http from '../modules/http'
+import ProductModal from './ProductModal.vue'
+import ProductModalContent from './ProductModalContent.vue'
 
 export default {
-    setup () {
+    name: 'AddProduct',
+    components: { ProductModal, ProductModalContent },
+    setup() {
+        const addClicked = ref();
         const state = reactive({
             addProduct: [],
-        })
-        let search = ref(''); //글 검색창
-        let searchType = ref('제목'); // 글검색종류
+        });
+        let search = ref(""); //글 검색창
+        let searchType = ref("제목"); // 글검색종류
         const router = useRouter();
-
-        http.get('/home/noticeT').then(res => {
-            console.log('addProduct:res: ', res.data);
+        //테스트용 목록
+        http.get("/home/noticeT").then(res => {
+            console.log("addProduct:res: ", res.data);
             state.addProduct = res.data;
-
-        })
-
+        });
         //검색버튼 엔터시
         const searchWord = () => {
             // console.log("noticeSearch: ", noticeSearch.value);
             // console.log("noticeSearchType: ", noticeSearchType.value);
-            http.get('/home/noticeSearch', {        //get방식은 params 옵션을 이용해서 쿼리스트링을 보낸다.
-                params:{
-                    noticeSearch : search.value,
-                    noticeSearchType : searchType.value
+            http.get("/home/noticeSearch", {
+                params: {
+                    noticeSearch: search.value,
+                    noticeSearchType: searchType.value
                 }
             }).then(res => {
-                console.log('searchRes :>> ', res.data);
+                console.log("searchRes :>> ", res.data);
                 state.addProduct = res.data;
-            })
-        }
-    
+            });
+        };
         return {
-            ...toRefs(state), searchType, search, searchWord
-        }
+            ...toRefs(state),
+            addClicked,
+            searchType,
+            search,
+            searchWord
+        };
     }
+    
 }
 </script>
 

@@ -8,13 +8,14 @@
                     <!-- 제목 : {{ noticeT[0] ? noticeT[0].title:'' }} -->
                     <!-- 제목 : {{$route.params.title}}  -->
                     <!-- [공지사항]  {{ rowInfo.notice_title }} -->
-                    <input type="text" name="title" id="title" 
+                    <input type="text" name="title" id="title" placeholder="제목을 입력해주세요."
                     :value="noticeT[0]['notice_title']" @input="noticeT[0]['notice_title'] = $event.target.value"
-                    class="w-full"  >                    <!-- 한글은 v-model의 경우 뒤에 한글자식 짤리기에 @input + :value를 쓴다 -->
+                    class="w-full">                    <!-- 한글은 v-model의 경우 뒤에 한글자식 짤리기에 @input + :value를 쓴다 -->
                 </div>
                 <div class="flex space-x-7 text-xs p-3 border-b-2 text-slate-500">
                     <div>
-                        <font-awesome-icon :icon="['far', 'user']" class="text-slate-500" /> {{ noticeT[0]['notice_writer'] }}
+                        <font-awesome-icon :icon="['far', 'user']" class="text-slate-500" /> {{ userInfo.info.id }}
+                        <!-- {{ noticeT[0]['notice_writer'] }} -->
                     </div>
                     <div v-if="isUpdate">
                         <font-awesome-icon :icon="['far', 'clock']" class="text-slate-500" /> {{ noticeT[0]['notice_date'] }}
@@ -43,13 +44,14 @@
 
          <!-- 댓글 영역 -->
         <div class="flex flex-col p-4 mb-5">
-             <div class="flex relative min-h-[30px] mb-3">
+             <div class="flex justify-end min-h-[30px] mb-3">
                 <!-- <div>
                    <font-awesome-icon :icon="['far', 'comment-dots']" /> 댓글 <b class="text-amber-600">0</b>
                 </div> -->
-                <div class="absolute right-2 space-x-2">
+                <div class="flex space-x-2">
                     <!-- <button  @click="deleteClicked" class="border p-1 rounded-md text-slate-600 bg-slate-100 hover:bg-slate-300">삭제</button> -->
-                    <button  @click="updateClicked" class="border p-1 rounded-md text-slate-600 bg-slate-100 hover:bg-slate-300">수정하기</button>
+                    <button v-if="isUpdate == true" @click="updateClicked" class="border p-1 rounded-md text-slate-600 bg-slate-100 hover:bg-slate-300">수정하기</button>
+                    <button v-if="isUpdate == false" @click="createClicked" class="border p-1 rounded-md text-slate-600 bg-slate-100 hover:bg-slate-300">작성하기</button>
                 </div>
             </div>
             
@@ -92,9 +94,10 @@
 
 <script>
 import http from '../modules/http';
-import { useRouter, useRoute} from 'vue-router';
+import { useRouter, useRoute, onBeforeRouteLeave} from 'vue-router';
 import { watch, reactive, ref, readonly, onMounted, toRefs, computed } from 'vue';
-import { router } from '@/router/router';
+// import { router } from '@/router/router';
+import { useLoginStore } from '@/stores/login';
 
 export default {
     name: 'noticeCU',
@@ -109,17 +112,19 @@ export default {
 
     setup () { //setup에 props가 전달되면 setup내에서 props는 readonly이며 컴포넌트는 반응형 변수에 반응하지않는다. watch로 변화된 값을 감지하여 메소드로 직접 값을 대입시켜줘야한다.
         const route = useRoute();
-        // const router = useRouter();
+        const router = useRouter();
+        const userInfo = useLoginStore();
         const noticeT = ref([{}]);
         const isUpdate = ref(false);
+        let isWriteCreated = false;
         // const noticeM = ref({
         //     notice_title: '',
         //     notice_content: ''
         // })
         //미리 들어올 데이터 타입에 맞는 구조가 있어야 undefined 가 안뜬다. 만약, 들어올 데이터가 [{}] 이렇게 배열안에 객체나 배열이라면?
         //ref 안에 초기화할때도 저렇게 데이터객체를 만들어놔야 데이터가 적합한 곳에 들어간다. 들어갈 공간구조가 할당되어 있지 않으면 당연히 undefined..
-
-        if (route.params.isUpdate) {    //isUpdate가 true이면 update작업, 아니면 create작업
+        // console.log('route.params.isUpdate :>> ',typeof route.params.isUpdate); //string으로 뜸
+        if (route.params.isUpdate === 'true') {    //isUpdate가 true이면 update작업, 아니면 create작업. params & query는 모두 문자열로 넘어온다 참고!
             console.log("router::: " , route.query.notice_no);
             http.get('/home/noticeContent', {   //글 상세페이지 로드
                 params: {
@@ -131,16 +136,39 @@ export default {
                 console.log('NoticeContent res.data: ', res.data);
                 noticeT.value = res.data;
                 console.log('NoticeContent noticeT.value: ', noticeT.value);
-                isUpdate.value = route.params.isUpdate;
+                isUpdate.value = (route.params.isUpdate !== 'false'); //실제로 반대되는 문자열불리언을 타입으로 비교해 실제 불리언을 생산해낸다. 'true'가 들어오면 !== 'false'와 비교하면 리얼true가 반환된는 것!
+                                                                    //JSON.parse('true') -- true  <<<< 이런 방식도 사용할 수있다!! 단, 이것은 대문자True는 안된다!
             }).catch((err) => {
                 console.error('NoticeContent err: ', err);
             })
 
-            // const name = computed(() => {
-            //     return 
-            // })
             
+        } else {
+            // noticeT.value[0].notice_writer = route.params.user_id;
+
         }
+        // const name = computed(() => {
+        //     return {}
+        // })
+
+        // 네비게이션가드(훅)으로 페이지이동에 대한 제어가능
+        onBeforeRouteLeave((to,from,next) => {
+            if (isWriteCreated) { //글이 완료되어 작성버튼누를시 true로 바껴서 가드종료.
+                next();
+                return; //return 안해주면 밑에 다 실행됨..
+            }
+
+            //작성 | 수정 클릭없이 페이지를 나갈때 (새로고침,뒤로가기) 실행.
+            if (to.path != from.path) {
+                const answer = window.confirm('작성중이던 내용이 사라집니다. 페이지를 떠나시겠습니까?')
+                if (answer) {
+                    next()
+                }
+            } else {    //이건 새로고침 조건일시 
+                next(false); //- 네비게이션 실행 안함
+            }
+        })
+
 // {
 //                 params: {
 //                     notice_no : route.params.notice_no,
@@ -149,11 +177,30 @@ export default {
 //                     notice_title : notice[0]['title'],
 //                 }
 //             }
+        const createClicked = () => {
+            noticeT.value[0]['notice_writer'] = userInfo.info.id;
+            http.post('/home/createNotice', noticeT.value[0]).then((res) => {
+                if (res.data.result == true) {
+                    alert('글을 작성하였습니다.');
+                    isWriteCreated = true;  //라우터가드회피용
+                    console.log('isWriteCreated :>> ', isWriteCreated);
+                    router.push({
+                        name: 'notice'
+                    })
+                } else {
+                    alert('작성 실패..');
+                }
+            }).catch((error) => {
+                console.log('createNotice error :>> ', error.response.data);
+            })
+        }
 
         const updateClicked = () => {
+            noticeT.value[0]['notice_writer'] = userInfo.info.id;
             http.put('/home/updateNotice', noticeT.value[0]).then((res) => {
                 if (res.data.result == true) {
                     alert('글을 업데이트 하였습니다.');
+                    isWriteCreated = true;  //라우터가드회피용
                     router.push({
                         name: 'noticeContent',
                         query: {notice_no: noticeT.value[0]['notice_no']}
@@ -163,8 +210,8 @@ export default {
         }
 
         return {
-            noticeT, isUpdate, 
-            updateClicked,
+            noticeT, isUpdate, userInfo,
+            updateClicked, createClicked
         }
     }
 }
