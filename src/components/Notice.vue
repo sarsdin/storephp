@@ -82,7 +82,7 @@
         </div>
 
          <!-- 검색바 Row -->
-        <div class="flex p-4">
+        <div class="flex relative p-4">
             <select v-model="noticeSearchType" name="option" id="searchbox"  class="block mt-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 <option value="제목">제목</option>
                 <option value="내용">내용</option>
@@ -98,6 +98,10 @@
                         class="block w-40 pl-10 p-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                         placeholder="검색어 입력">
             </div>
+            <!-- 글작성 클릭버튼 -->
+            <div v-if="userInfo.lstate == 'logined' " class="absolute right-3">
+                <button @click="createNotice" class="border p-1 rounded-md text-slate-500 font-semibold bg-slate-100 hover:bg-slate-300" type="button">글쓰기</button>
+            </div>
             
         </div>
 
@@ -111,6 +115,7 @@ import { inject, onMounted, ref } from "vue";
 import http from '../modules/http.js';
 import { useRouter, useRoute } from 'vue-router';
 import NoticeContent from './NoticeContent.vue'
+import { useLoginStore } from "@/stores/login.js";
 
 export default {
     name: 'Notice',
@@ -121,6 +126,7 @@ export default {
         const noticeT = ref([]); //글목록배열
         let noticeSearch = ref(''); //글 검색창
         let noticeSearchType = ref('제목'); // 글검색종류
+        const userInfo = useLoginStore()    //전역 로그인된 유저정보
         const router = useRouter();
         const route = useRoute();
 
@@ -131,6 +137,10 @@ export default {
         //     showed.value = false;
         // }
 
+        const createNotice = () => {
+            router.push({name: 'noticeCU', params: { user_id: userInfo.info.id, isUpdate: false }})
+        }
+
 
         //라우터로 글 클릭시 이동
         // const rowClicked = (item) => {
@@ -140,6 +150,13 @@ export default {
             console.log('rowClicked : ', item);
             showed.value = true;
             rowInfo.value = item;
+
+            //조회수 업용 통신
+            http.put('/home/noticeRowClicked', {
+                notice_no: item.notice_no
+            }).then((res) => {
+                console.log('rowClicked: 조회수업성공결과 :>> ', res.data.result);
+            })
 
             router.push({ name: 'noticeContent', query: {notice_no: item.notice_no}})
             window.scrollTo({ top: 0, behavior: 'smooth'}); //글 클릭시 맨위로 가기 참고 - messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
@@ -183,7 +200,7 @@ export default {
 
         return{
             noticeT, noticeSearch, searchWord, noticeSearchType, rowClicked, rowDeleted,
-            showed, rowInfo
+            showed, rowInfo, createNotice, userInfo
         }
     }
 

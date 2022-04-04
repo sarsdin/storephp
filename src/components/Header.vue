@@ -33,7 +33,7 @@
                             </svg>
                             주문조회
                         </a>
-                        <router-link :to="{name:'notice'}" class="flex flex-col items-center text-xs">
+                        <router-link :to="{name:'notice'}" @click="storeInfo.rstate++" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
                             </svg>
@@ -94,6 +94,7 @@ import {inject, ref} from 'vue'
 import Megamenu from './Megamenu.vue';
 import { useRouter } from 'vue-router';
 import { useLoginStore } from '@/stores/login.js';
+import { useStore } from '@/stores/store.js';
 
 export default {
     name: 'Header',
@@ -106,6 +107,7 @@ export default {
         const isVisible = ref(false);
         const router = useRouter();
         const userInfo = useLoginStore()    //전역 stroe
+        const storeInfo = useStore()    //전역 stroe
         // const userInfo = inject('userInfo');
         console.log('Header :>> ', userInfo);
 
@@ -131,7 +133,7 @@ export default {
         
 
         return {
-            showMenu, isVisible, logoClick, logout, userInfo
+            showMenu, isVisible, logoClick, logout, userInfo, storeInfo
         }
     }
 }

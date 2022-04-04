@@ -210,6 +210,42 @@ class Home extends BaseController
 //        }
     }
 
+
+
+    public function createNotice() : ResponseInterface
+    {
+        $notice = new Notice();
+        $res = $this->response;
+        $req = $this->request;
+
+        $data = $req->getJSON(true);
+        $data['notice_date'] = date("Y-m-d");
+
+        log_message("debug", "createNotice:\$data: ".print_r($data, true));
+
+        try {
+            $result = $notice->insert($data);  //성공시 insert된 row의 기본키값 리턴됨
+            log_message("debug", "createNotice:\$result: ".print_r($result, true));
+
+            if ($result === false) {    //insert 작업이 실패할경우 false를 리턴하는데 이경우 users모델에 지정된 validation error메시지를 클라에 보낸다.
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => $notice->errors()
+                ]);
+
+            } else {
+                return $res->setJSON([
+                    'result' => true,
+                    'msg' => '회원님의 글을 작성하였습니다.'
+                ]);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
     public function updateNotice() : ResponseInterface
     {
         $notice = new Notice();
@@ -234,6 +270,41 @@ class Home extends BaseController
                 return $res->setJSON([
                     'result' => true,
                     'msg' => '회원님의 글을 수정하였습니다.'
+                ]);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+    public function noticeRowClicked() : ResponseInterface
+    {
+        $notice = new Notice();
+        $res = $this->response;
+        $req = $this->request;
+
+        $data = $req->getJSON(true);
+//        $data['notice_']
+        log_message("debug", "noticeRowClicked:\$data: ".print_r($data, true));
+
+        $sql = "update notice set notice_hit = notice_hit+1 where notice_no = ?";
+
+        try {
+//            $result = $notice->where('notice_no', $data['notice_no'])->update($data['notice_no'], $data);
+            $result = $notice->db->query($sql, $data['notice_no']);
+            log_message("debug", "noticeRowClicked:\$result: ".print_r($result, true));
+
+            if ($result === false) {    //insert 작업이 실패할경우 false를 리턴하는데 이경우 users모델에 지정된 validation error메시지를 클라에 보낸다.
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => $notice->errors()
+                ]);
+
+            } else {
+                return $res->setJSON([
+                    'result' => true,
+                    'msg' => '글의 조회수를 수정하였습니다.'
                 ]);
             }
 

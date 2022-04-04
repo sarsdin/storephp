@@ -4,10 +4,13 @@ import App from './App.vue';
 import './index.css'
 import axios from 'axios';
 import http from './modules/http.js';
-import {router} from './router/router.js'
-import userInfo from './compositions/userinfo.js'
+import router from './router/router.js'
+// import userInfo from './compositions/userinfo.js'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+
+//global modules
+import consoleLog from "./modules/consoleLog";
 
 //font-awesome 관련 import
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -16,6 +19,23 @@ import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 library.add(fas, far, fab)
+
+//퀘이사ui quasar import
+import { Quasar } from 'quasar'
+import quasarLang from 'quasar/lang/ko-KR'
+import quasarIconSet from 'quasar/icon-set/svg-fontawesome-v6'
+
+// Import icon libraries
+import '@quasar/extras/roboto-font/roboto-font.css'
+import '@quasar/extras/material-icons/material-icons.css'
+import '@quasar/extras/fontawesome-v6/fontawesome-v6.css'
+
+// A few examples for animations from Animate.css: 퀘이사 애니메이션 적용부분
+// import @quasar/extras/animate/fadeIn.css
+// import @quasar/extras/animate/fadeOut.css
+
+// Import Quasar css
+import 'quasar/src/css/index.sass'
 
 // Vue.prototype.$axios = axios;
 
@@ -32,11 +52,17 @@ pinia.use(piniaPluginPersistedstate)
 
 const app = createApp(App);
 app.component("font-awesome-icon", FontAwesomeIcon);
-app.provide('userInfo', userInfo);
+// app.provide('userInfo', userInfo);
 app.provide('http', http);
 app.provide('$axios', axios); //app인스턴스 생성시 provide함수를 이용해 axios변수를 전역에서 활용하도록 제공?!
 app.use(router);
 app.use(pinia);
+app.use(consoleLog);
+app.use(Quasar, {
+    plugins: {}, // import Quasar plugins and add here
+    lang: quasarLang,
+    iconSet: quasarIconSet,
+  })
 app.mount('#app');
 // createApp(App).mount('#app');
 
