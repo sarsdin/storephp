@@ -1,6 +1,7 @@
 <template>
 
 <div class="relative max-w-screen-xl px-4 py-8 mx-auto">
+    <!-- 헤더 -->
     <div>
         <h1 class="text-2xl font-bold lg:text-3xl">
             상품등록
@@ -10,14 +11,21 @@
         </p> -->
     </div>
 
+    <!-- 본문 시작 -->
     <div class="grid gap-8 lg:items-start lg:grid-cols-4">
+        <!-- 사진 등록 -->
         <div class="lg:col-span-3">
-            <div class="relative mt-4">
-                <img alt="" src="../../photos/tee-green-hanger.png" class="w-full rounded-xl h-72 lg:h-[450px] object-cover" />
+            <div class="flex relative mt-4 justify-center">
+                <label for="ifile">
+                    <img alt="" :src="ifileC" class="w-fit rounded-xl h-72 lg:h-[450px] object-contain" />
+                    <!-- <div class="w-full rounded-xl h-72 lg:h-[450px] object-cover" >{{ this.$refs.ifiles.value }}</div> -->
+                </label>
+                <input type="file" class="hidden" @change="ifile = $event.target.files" multiple accept="image/png, image/jpeg, image/gif" name="file" id="ifile">
+                <!-- <input type="text" class="" ref="ifiles" name="file" id="ifile" value="testestesstesalkjsflkjsldkgjsldkgjlgjlkjgalksjfdalkj/n sakfdjksdfj"> -->
             </div>
         </div>
 
-      <div class="lg:top-0 lg:sticky">
+        <div class="lg:top-0 lg:sticky">
         <form class="space-y-1 lg:pt-0">
             <!-- 상단 동그라미 -->
             <fieldset>
@@ -38,14 +46,42 @@
             <!-- <input type="number" class="w-full px-4 bg-gray-100 border rounded"> -->
             <select name="category" class="w-full px-4 bg-gray-100 border rounded">
                 <optgroup label="라면즉석식품">
-                    <option value="gg">라면즉석식품</option>
-                    <option value="gg">커피음료</option>
-                    <option value="gg">생활잡화</option>
+                    <option value="라면">라면</option>
+                    <option value="즉석밥">즉석밥</option>
+                    <option value="죽/스프">죽/스프</option>
+                    <option value="기타즉석식품">기타즉석식품</option>
                 </optgroup>
                 <optgroup label="커피음료">
-                    <option value="gg">라면즉석식품</option>
-                    <option value="gg">커피음료</option>
-                    <option value="gg">생활잡화</option>
+                    <option value="커피">커피</option>
+                    <option value="차류">차류</option>
+                    <option value="음료">음료</option>
+                    <option value="생수/기타">생수/기타</option>
+                </optgroup>
+                <optgroup label="과자류">
+                    <option value="스낵">스낵</option>
+                    <option value="쿠키/비스켓">쿠키/비스켓</option>
+                    <option value="초콜릿">초콜릿</option>
+                    <option value="수입과자/기타">수입과자/기타</option>
+                </optgroup>
+                <optgroup label="식품류">
+                    <option value="통조림">통조림</option>
+                    <option value="조미/소스류">조미/소스류</option>
+                    <option value="밀가루">밀가루</option>
+                    <option value="장류/양념류">장류/양념류</option>
+                    <option value="건어물/안주류">건어물/안주류</option>
+                </optgroup>
+                <optgroup label="생활잡화">
+                    <option value="가정용품">가정용품</option>
+                    <option value="위생용품">위생용품</option>
+                    <option value="의약외품">의약외품</option>
+                    <option value="일회용품">일회용품</option>
+                    <option value="주방용품">주방용품</option>
+                    <option value="욕실용품">욕실용품</option>
+                </optgroup>
+                <optgroup label="기타">
+                    <option value="농수산물">농수산물</option>
+                    <option value="냉동식품">냉동식품</option>
+                    <option value="기타">기타</option>
                 </optgroup>
             </select>
 
@@ -77,6 +113,7 @@
         </form>
         </div>
 
+        <!-- 내용(에디터) 부분 -->
         <div class="lg:col-span-3">
             <div class="prose max-w-none">
                 <p class="mb-2"><b>내용작성</b></p>
@@ -97,7 +134,8 @@
             <!-- <iframe src="https://www.youtube-nocookie.com/embed/Eb-Vfe61W6A?controls=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> -->
             </div>
         </div>
-    </div>
+
+    </div><!--본문끝-->
 </div>
 
 </template>
@@ -106,19 +144,29 @@
 import { reactive, ref, toRefs } from 'vue'
 import Tiptap from './Tiptap.vue'
 import Qeditor from './Qeditor.vue'
+import { computed } from '@vue/reactivity';
 
 export default {
     name: "ProductModalContent",
+    components: { Qeditor },
     setup() {
-        const editorContent = ref();
+        // const editorContent = ref();
         const editor = ref('');
+        const ifile = ref({})
+        const ifileC = computed(() => {
+            console.log("ifile: ", ifile.value);
+            if(ifile.value[0] != null) {
+                console.log("ifile not null: ", ifile.value);
+                return URL.createObjectURL(ifile.value[0]);
+            }
+        })
         // editorContent.value = '<p>A Vue.js wrapper component for tiptap to use <code>v-model</code>.</p>';
 
         return {
-            editorContent, editor
+            // editorContent, 
+            editor, ifile, ifileC
         };
     },
-    components: { Qeditor },
     // data() {
     //     return {
     //         editorContent: '<p>A Vue.js wrapper component for tiptap to use <code>v-model</code>.</p>',
