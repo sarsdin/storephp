@@ -72,7 +72,7 @@
             </div>
 
             <nav class="sm:w-auto box-border px-1 py-2 bg-white border-y-2 border-y-slate-400 font-bold"
-            @click="showMenu">
+            @click.prevent="showMenu">
                 <ul class="flex justify-around list-none m-0 p-0 gap-4">
                     <li class="text-center"><a href="/#">라면즉석식품</a></li>
                     <li class="text-center"><a href="">커피음료</a></li>

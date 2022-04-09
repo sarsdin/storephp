@@ -93,7 +93,7 @@ import { ref, onMounted, getCurrentInstance, computed } from 'vue';
 import http from "@/modules/http";
 
 export default {
-    name: 'Contentholder',
+    name: 'Menu',
     props:{
         it :{ type: Array }  //Home items에서 넘어온 값
         // item:{ name: String, price: Number, expire: Number }

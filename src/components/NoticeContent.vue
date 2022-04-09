@@ -103,7 +103,7 @@ export default {
     //     },
     // },
     // props: ['rowInfo'],
-    inject: ['userInfo'],
+    // inject: ['userInfo'],
     emits: ['rowDeleted'],
 
     setup (props, context) { //setup에 props가 전달되면 setup내에서 props는 readonly이며 컴포넌트는 반응형 변수에 반응하지않는다. watch로 변화된 값을 감지하여 메소드로 직접 값을 대입시켜줘야한다.

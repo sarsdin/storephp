@@ -29,7 +29,7 @@ import {reactive, ref} from "vue";
 export const useStore = defineStore('store', {
     state: () => {
         return {
-            rstate : 0
+            rstate : 0  //Header - 공지사항에서 ++됨
         }
     },
     // getters:{

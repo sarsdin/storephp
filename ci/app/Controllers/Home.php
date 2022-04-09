@@ -27,7 +27,7 @@ class Home extends BaseController
             "no" => 0,
             "title" => "제목나오는곳",
             "writer" => substr($tmpString,0, 3), //php에서 한글문자를 substr로 자르면 깨짐. 이유는 한글이 utf-8에서
-            "date" => date("Y-m-d"),                //3byte이기때문.
+            "date" => date('Y-m-d H:i:s'),                //3byte이기때문.
             "hit" => 123,
             "content" => "본문"
         ];
@@ -36,7 +36,7 @@ class Home extends BaseController
             $data['no'] = $i;
             $data['title'] = "제목나오는곳".$i;
             $data['writer'] = mb_substr($tmpString, 0, 3); //그래서 멀티byte단위의 문자열처리를 하기위해 mbstring 확장함수를 사용해야한다.
-            $data['date'] = date("Y-m-d");
+            $data['date'] = date('Y-m-d H:i:s');
             $data['hit'] = $i*$i;
             $data['content'] = "content".$i;
             array_push($resData, $data);
@@ -44,15 +44,19 @@ class Home extends BaseController
         $this->testProps = $resData;
     }
 
+    //php 기본 설정 정보 페이지 로딩
     public function index2()
     {
         return phpinfo();
     }
+
+    //기본페이지 자동 로딩
     public function index()
     {
       return view('../../public/dist/index.html');
     }
 
+    //회원 가입 처리
     public function join() : ResponseInterface
     {
         $users = new Users();
@@ -94,6 +98,7 @@ class Home extends BaseController
 //        return $res->setJSON($result);
     }
 
+    //로그인 처리
     public function login() : ResponseInterface
     {
         $users = new Users();
@@ -141,6 +146,7 @@ class Home extends BaseController
     }
 
 
+    //공지 게시판 글전체 불러오기
     public function notice() : ResponseInterface
     {
         $notice = new Notice();
@@ -211,7 +217,7 @@ class Home extends BaseController
     }
 
 
-
+    //공지 게시판 글 작성
     public function createNotice() : ResponseInterface
     {
         $notice = new Notice();
@@ -219,7 +225,7 @@ class Home extends BaseController
         $req = $this->request;
 
         $data = $req->getJSON(true);
-        $data['notice_date'] = date("Y-m-d");
+        $data['notice_date'] = date('Y-m-d H:i:s');
 
         log_message("debug", "createNotice:\$data: ".print_r($data, true));
 
@@ -246,6 +252,7 @@ class Home extends BaseController
     }
 
 
+    //공지 게시판 글 수정
     public function updateNotice() : ResponseInterface
     {
         $notice = new Notice();
@@ -278,6 +285,7 @@ class Home extends BaseController
         }
     }
 
+    //공지게시판 클릭시 조회수 증가
     public function noticeRowClicked() : ResponseInterface
     {
         $notice = new Notice();
@@ -313,6 +321,7 @@ class Home extends BaseController
         }
     }
 
+    //공지게시판 글 삭제
     public function deleteNotice() : ResponseInterface
     {
         $notice = new Notice();
@@ -377,7 +386,7 @@ class Home extends BaseController
             "no" => 0,
             "title" => "제목나오는곳",
             "writer" => substr($tmpString,0, 3), //php에서 한글문자를 substr로 자르면 깨짐. 이유는 한글이 utf-8에서
-            "date" => date("Y-m-d"),                //3byte이기때문.
+            "date" => date('Y-m-d H:i:s'),                //3byte이기때문.
             "hit" => 123,
             "content" => "본문"
         ];
@@ -386,7 +395,7 @@ class Home extends BaseController
             $data['no'] = $i;
             $data['title'] = "제목나오는곳".$i;
             $data['writer'] = mb_substr($tmpString, 0, 3); //그래서 멀티byte단위의 문자열처리를 하기위해 mbstring 확장함수를 사용해야한다.
-            $data['date'] = date("Y-m-d");
+            $data['date'] = date('Y-m-d H:i:s');
             $data['hit'] = $i*$i;
             $data['content'] = "content".$i;
             array_push($resData, $data);
