@@ -1,4 +1,5 @@
 import Home from '../components/Home.vue'
+import menu from '../components/Menu.vue'
 import header from '../components/Header.vue'
 import notice from '../components/Notice.vue'
 import noticeContent from '../components/NoticeContent.vue'
@@ -21,6 +22,11 @@ const routes = [
                 components: { home : contentholder }, 
                 // notice라는 이름의 <router-view>를 컴포넌트로 가진다. 그리고, 거기에 import된 contentholder라는 vue를 보여준다.
                 name:'contentholder'
+            },
+            {
+                path: 'menu',
+                components: { home : menu },
+                name: 'menu'
             },
             {
                 path:'notice',

@@ -58,6 +58,7 @@ app.provide('$axios', axios); //app인스턴스 생성시 provide함수를 이�
 app.use(router);
 app.use(pinia);
 app.use(consoleLog);
+// consoleLog.install(app); //app.use(consoleLog) 와 동일
 app.use(Quasar, {
     plugins: {}, // import Quasar plugins and add here
     lang: quasarLang,

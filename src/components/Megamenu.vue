@@ -5,11 +5,11 @@
         </a>
         <!-- <transition name="mega-menu-fade"> -->
         
-        <div class="mega-menu absolute normal-case font-normal bg-white bg-opacity-95 shadow-sm rounded-sm overflow-hidden border w-[973px]">
+        <div class="mega-menu absolute normal-case font-normal !bg-opacity-95 !bg-white shadow-sm rounded-sm overflow-hidden border w-[973px]">
             <div class="flex border-b ml-12 p-0 gap-0">
                 <ul class="w-1/6 text-sm">
                     <li class="mb-2 font-bold text-green-700 text-lg">라면즉석식품</li>
-                    <a href=""><li class="mb-2 font-bold">라면</li></a>
+                    <router-link :to="{name: 'menu', query:{category: '라면'} }"><li class="mb-2 font-bold">라면</li></router-link>
                     <a href=""><li class="mb-2 font-bold">즉석밥</li></a>
                     <a href=""><li class="mb-2 font-bold">죽/스프</li></a>
                     <a href=""><li class="mb-2 font-bold">기타즉석식품</li></a>
@@ -64,15 +64,13 @@
 import {ref} from 'vue'
 
 export default {
-    // name:'Megamenu'
-    // setup() {
-    //     const isVisible = ref(false)
-    //     const showMenu = () => isVisible = true
-    //     const hideMenu = () => isVisible = false
+    name:'Megamenu',
+    setup() {
+        
 
-    //     return {
-    //         showMenu, hideMenu
-    //     }
-    // }
+        return {
+            
+        }
+    }
 }
 </script>

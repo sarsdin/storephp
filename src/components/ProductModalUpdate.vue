@@ -4,7 +4,7 @@
     <!-- 헤더 -->
     <div>
         <h1 class="text-2xl font-bold lg:text-3xl">
-            상품등록
+            상품수정
         </h1>
         <!-- <p class="mt-1 text-sm text-gray-500">
             카테고리: 카테고리명
@@ -16,7 +16,7 @@
         <!-- 사진 등록 -->
         <div class="lg:col-span-3">
             <div class="flex relative mt-4 justify-center">
-                <label class="w-full" for="ifile" @click="onImageClicked($event)" > <!--label이 input과 이어져 있을때 둘은 동기화(같은태그,같은이벤트). -->
+                <label class="min-w-full" for="ifile" @click="onImageClicked($event)" > <!--label이 input과 이어져 있을때 둘은 동기화(같은태그,같은이벤트). -->
                     <!-- <img alt="" :src="ifileC" class="w-fit rounded-xl h-72 lg:h-[450px] object-contain" /> -->
                     <!-- <div class="w-full rounded-xl h-72 lg:h-[450px] object-cover" >{{ this.$refs.ifiles.value }}</div> -->
                     <!-- <q-carousel
@@ -64,6 +64,7 @@
                     </q-carousel> -->
 
                     <q-carousel
+                    class="w-full"
                     v-model="slide"
                     swipeable
                     animated
@@ -71,8 +72,8 @@
                     infinite
                     
                     >
-                        <q-carousel-slide v-for="(file, index) in ifileC" :key="file" :name="index+1" :img-src="file"
-                          class="!bg-contain bg-no-repeat"/>
+                        <q-carousel-slide v-for="(file, index) in ifileC" :key="file" :name="index+1" :img-src="file" 
+                         class="!bg-contain bg-no-repeat"/>
                         <!-- <q-carousel-slide :name="2" img-src="https://cdn.quasar.dev/img/parallax1.jpg" />
                         <q-carousel-slide :name="3" img-src="https://cdn.quasar.dev/img/mountains.jpg" /> /> -->
                     </q-carousel>
@@ -147,7 +148,7 @@
 
             <div class="text-lg font-bold">SPEC</div>
             <div class="px-4 bg-gray-100 border rounded">
-                <input v-model="product.product.product_spec" type="text" class="w-full px-4 bg-gray-100 border rounded" placeholder="SPEC" />
+                <input v-model="product.product.product_spec" type="text" class="w-full bg-gray-100 border rounded" placeholder="SPEC" />
                 <!-- <p class="text-sm">
                     <span class="block">
                     </span>
@@ -160,13 +161,13 @@
             </div>
 
             <hr>
-            <button @click="addClicked" type="button" class="w-full px-6 py-3 text-sm font-bold tracking-wide text-white uppercase bg-red-700 rounded">
-                상품등록
+            <button @click="modifyClicked" type="button" class="w-full px-6 py-3 text-sm font-bold tracking-wide text-white uppercase bg-red-700 rounded hover:bg-red-800">
+                상품수정하기
             </button>
 
-            <!-- <button type="button" class="w-full px-6 py-3 text-sm font-bold tracking-wide uppercase bg-gray-100 border border-gray-300 rounded" >
+            <button type="button" class="w-full px-6 py-3 text-sm font-bold tracking-wide uppercase bg-gray-100 border border-gray-300 rounded" >
                 품절처리
-            </button> -->
+            </button>
         </form>
         </div>
 
@@ -201,13 +202,16 @@ import { computed } from '@vue/reactivity';
 import consoleLog from '@/modules/consoleLog';
 
 export default {
-    name: "ProductModalContent",
+    name: "ProductModalUpdate",
     components: { Qeditor },
+    props: ['productNo'],
+
     setup(props,context) {
         // const editorContent = ref();
         const { proxy } = getCurrentInstance(); //global instance의 global변수를 담고있는 proxy객체를 가져옴.
         const product = reactive({  //서버로 보낼 데이터가 담기는 변수. FormData로 담기며 product_image의 경우 file(이미지)이 담긴다.
             product : {
+                product_no: 0,
                 product_name: '',
                 category_code: '',
                 product_stock: 0,
@@ -218,17 +222,22 @@ export default {
             product_image: {}
         })
         const slide = ref(1)    //carousel의 슬라이드 번호를 담고 있으며 슬라이드 번호는 1부터 시작한다.(0이 아님)
+        let isImageLoad = false;
         const editor = ref(''); //Qeditor으 내용을 담고 있다.
         const ifile = ref([])   //ifileC에서 처리될 image file을 담는 역할을 한다.
-        const ifileC = computed({
+        const ifileC = computed({ //q-carousel-slide에서 이미지슬라이드를 처리하는데 사용되는 변수
             get: () => {
                 proxy.$log("ifile: ", ifile.value); //global변수를 이용하여 console.log출력
                 const tmp = [];
                 if(ifile.value[0] != null) {//input tag에서 받아온 사진파일(배열)의 첫번재를 검사하여 데이터가 있다면 파일을 url로 변환하여 뷰에 연결.
-                    console.log("ifile not null: ", ifile.value);
+                    proxy.$log('ifile not null: ', ifile.value);
                     // ifile.value.forEach(element => {  //forEach가 function이 아니라고 에러남
                     //     tmp.push(URL.createObjectURL(element))
                     // });
+                    if (isImageLoad) { //서버통신으로 이미지가 로드되었다면 true로 바뀔것이고 ifile에 이미지대입했을것이기에 그대로 리턴만해준다.
+                        isImageLoad = false; //이미지변경의 경우를 고려하여 미리 false로 초기화 해줌.
+                        return ifile.value;
+                    }
                     for (let i = 0; i < ifile.value.length; i++) {  //받은 사진배열의 길이만큼 뷰에 들어갈 url을 생성하여 new배열에 넣음.
                         const element = ifile.value[i];
                         tmp.push(URL.createObjectURL(element))
@@ -247,8 +256,41 @@ export default {
             // return URL.createObjectURL(ifile.value[0]);
         })
 
-        const addClicked = () => {
+        //서버로부터 update될 데이터 로딩
+        http.get('/productc/getProductInfo', {
+            params:{
+                product_no: props.productNo
+            }
+        }).then((res) => {
+            proxy.$log('[ProductModalUpdate] http.get: ', res.data); //result:상품정보, resultImg:이미지경로정보
+            product.product = res.data.result;
+            //받아온 이미지경로 정보배열을 존재확인 후 임시배열에 주소형식으로 저장하여 ifile에 넣으면 ifileC에서 이미지슬라이드로 넘김
+            if (res.data.resultImg[0] != null) {
+                isImageLoad = true;     //ifileC getter에서 이미지로딩이 성공적으로 로딩되었는지(if문) 확인하는 용도.
+                const tmp = [];
+                for (const item of res.data.resultImg) {
+                    tmp.push('http://192.168.112.128/uploads/'+item['stored_file_name']);
+                }
+                ifileC.value = tmp;
+            }
+            editor.value = res.data.result.product_desc;
+            // product : {
+            //     product_name: '',
+            //     category_code: '',
+            //     product_stock: 0,
+            //     product_price: 0,
+            //     product_spec: '',
+            //     product_desc: '',
+            // },
+            // product_image: {}
+        }).catch((error) => {
+            proxy.$log('[ProductModalUpdate] http.get error: ', error.response.data);
+        })
+
+        //상품수정 버튼 클릭
+        const modifyClicked = () => {
             let data = new FormData();
+            data.append('product_no', product.product.product_no)
             data.append('product_name', product.product.product_name)
             data.append('category_code', product.product.category_code)
             data.append('product_stock', product.product.product_stock)
@@ -274,10 +316,10 @@ export default {
 
             // proxy.$log('product_name data: ', data1.getAll('product')); //test
             proxy.$log('product_name data: ', data.getAll('product_name'));
-            proxy.$log('addClicked data: ', data.getAll('product_image'));
+            proxy.$log('modifyClicked data: ', data.getAll('product_image'));
 
             //서버통신
-            http.post('/productc/addProduct', data, {
+            http.post('/productc/updateProduct', data, {
                 headers:{
                     'Content-Type': 'multipart/form-data'
                 },
@@ -285,27 +327,18 @@ export default {
                 // maxBodyLength: 1      //요청하는 바디의 사이즈
             }).then((res) => {
                 if (res != 'false') {
-                    alert('상품등록 되었습니다.')
-                    proxy.$log('[ProductModalContent]AddClicked res: ' , res.data)
+                    alert('상품수정 되었습니다.')
+                    proxy.$log('[ProductModalUpdate]상품수정modifyClicked res: ' , res.data)
                     context.emit('modalOff', false)
                     window.location.reload();
                 } else{
-                    alert('상품등록 중 오류가 발생하였습니다.')
-                    proxy.$log('[ProductModalContent]AddClicked res: ' , res.data)
+                    alert('상품수정 중 오류가 발생하였습니다.')
+                    proxy.$log('[ProductModalUpdate]상품수정modifyClicked res: ' , res.data)
                 }
             }).catch((error) => {
-                proxy.$log('상품등록에러', error.response.data)
+                proxy.$log('상품수정에러', error.response.data)
             })
         }
-//   product : {
-//                 product_name: '',
-//                 category_code: '',
-//                 product_stock: 0,
-//                 product_price: 0,
-//                 product_spec: '',
-//                 product_desc: '',
-//             },
-//             product_image: 
 
 
         return {
@@ -318,19 +351,12 @@ export default {
                     e.stopPropagation();
                 }
             },
-            addClicked
+            modifyClicked
         };
     },
 
 }
 </script>
-
-<style scoped>
-.testtest{
-    background-size: contain;
-    background-repeat: no-repeat;
-}
-</style>
 
 <style lang="scss" scoped>
 //   .prose h3 {

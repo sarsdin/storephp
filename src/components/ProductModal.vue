@@ -1,6 +1,6 @@
 <template>
 <!--- more free and premium Tailwind CSS components at https://tailwinduikit.com/ --->
-<div v-if="propsModalC == true" class="min-h-[1000px] max-h-fit py-12 bg-gray-700 bg-opacity-30 transition duration-150 ease-in-out z-10 absolute top-0 right-0 bottom-0 left-0" id="modal">
+<div v-if="propsModalC == true" class="min-h-[1300px] max-h-fit py-12 bg-gray-700 bg-opacity-30 transition duration-150 ease-in-out z-10 absolute top-0 right-0 bottom-0 left-0" id="modal">
     <div role="alert" class="container mx-auto w-full md:w-5/6 max-w-6xl">
         <div class="relative py-8 px-5 md:px-10 bg-white shadow-md rounded border border-gray-400">
             <!-- 헤더 -->
@@ -8,9 +8,9 @@
 
             <!-- 제출,취소버튼 -->
             <div class="relative px-5 mx-auto max-w-screen-xl">
-                <button class="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition duration-150 ease-in-out hover:bg-indigo-600 bg-indigo-700 rounded text-white px-8 py-2 text-sm">
+                <!-- <button class="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition duration-150 ease-in-out hover:bg-indigo-600 bg-indigo-700 rounded text-white px-8 py-2 text-sm">
                     제출
-                </button>
+                </button> -->
                 <button class="focus:outline-none focus:ring-2 focus:ring-offset-2  focus:ring-gray-400 ml-3 bg-gray-100 transition duration-150 text-gray-600 ease-in-out hover:border-gray-400 hover:bg-gray-300 border rounded px-8 py-2 text-sm" 
                     @click="cancelClicked()">취소</button>
             </div>
@@ -45,7 +45,7 @@ export default {
     setup(props, context) {
         // const modal = (props["modelValue"]); //ref, reactive는 컴포넌트 내에서의 값에만 반응하는듯 외부로부터 받은값 props에는 반응성이 초기에만 한번 대입되고 그후로는 없어지는듯??
         const propsModalC = computed(() => { //computed의 getter를 이용해서 readonly 값을 리턴한다. writable하게 할려면 set()을 선언해줘야함.
-            return props["modelValue"];
+            return props["modelValue"];     //위쪽 컴포넌트에서 model props로 true를 받으면 모달 보여주기.
         });
         const cancelClicked = () => {
             // modal.value = false;

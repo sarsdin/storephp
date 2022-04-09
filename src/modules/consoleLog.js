@@ -5,7 +5,7 @@ const method = {
 }
 
 export default {
-    install(Vue){
+    install(Vue){   //app.use(이모듈)을 사용했을 때 app을 인자로 받아서 실행하는듯
         Vue.config.globalProperties.$log = method.consoleLog;
     }
 }
