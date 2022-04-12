@@ -91,6 +91,7 @@
 <script>
 import { ref, onMounted, getCurrentInstance, computed } from 'vue';
 import http from "@/modules/http";
+import { useRoute, useRouter } from 'vue-router';
 
 export default {
     name: 'Menu',
@@ -100,16 +101,26 @@ export default {
     },
     setup(props) {
         const {proxy} = getCurrentInstance();
+        const router = useRouter();
+        const route = useRoute();
         // const itemImg = ref({});
         const pList = ref([]);
-
-        http.get('/productc/pList').then((res) => {
-            pList.value = res.data;
-        })
+        proxy.$log('route.query.category: ', route.query.category);
+        if (route.query.category != undefined && route.query.category != null) {
+            http.get('/productc/menuProductList', {
+                params:{
+                    category_code: route.query.category
+                }
+            }).then((res) => {
+                proxy.$log('[Menu]menuProductList res.data: ', res.data);
+                pList.value = res.data;
+            })
+            
+        }
 
         const imageLoad = (item) => {
             proxy.$log('Contentholder.imageLoad(): ', item);
-            if (item.product_image != null) {
+            if (item.product_image != null) {               //서버로부터받은 item에는 image주소도 포함되어 있고 이미지가 없는 상품이면 그 속성에 null값이 들어가 있다.
                 proxy.$log('Contentholder.imageLoad(): ', item);
                 return 'http://192.168.112.128/uploads/'+item.product_image[0];
             } else {

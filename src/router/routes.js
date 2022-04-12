@@ -9,6 +9,8 @@ import login from "../components/Login.vue";
 import join from "../components/Join.vue";
 import contentholder from "../components/Contentholder.vue";
 import addproduct from "../components/AddProduct.vue";
+import productDetail from "../components/ProductDetail.vue";
+import cart from "../components/Cart.vue";
 
 
 const routes = [
@@ -26,7 +28,8 @@ const routes = [
             {
                 path: 'menu',
                 components: { home : menu },
-                name: 'menu'
+                name: 'menu',
+                props:true
             },
             {
                 path:'notice',
@@ -56,8 +59,19 @@ const routes = [
                     // default: ()=> import('../components/Header.vue'),
                     home : noticeCU
                 },
-                props:true
+                // props:true
             },
+            {
+                path: 'productDetail',
+                name: 'productDetail',
+                components: { home: productDetail }
+            },
+            {
+                path: 'cart',
+                name: 'cart',
+                components: { home: cart }
+            },
+
             
         ],
         props:true

@@ -1,6 +1,6 @@
 <template>
 <div v-for="item in pList" v-bind:key="item.product_name" id="contentholderrootdiv" class="max-w-[323px] min-w-[323px] p-4"> <!-- w-screen -->
-    <a href="#" class="block p-4 rounded-lg shadow-sm shadow-indigo-200" v-on:click="atag('hello',$event)" v-on:mouseleave="aonmouseleave">
+    <a href="#" class="block p-4 rounded-lg shadow-sm shadow-indigo-200" v-on:click="productClicked(item, $event)" v-on:mouseleave="aonmouseleave">
         <img alt="이미지를 로드할 수 없습니다. 재시도 요망" :src="imageLoad(item)"
             class="object-cover w-full h-56 rounded-md" />
 <!-- itemImgLoad != null? itemImgLoad:'https://img.apti.co.kr/aptHome/images/sub/album_noimg.gif' -->
@@ -90,6 +90,7 @@
 
 <script>
 import { ref, onMounted, getCurrentInstance, computed } from 'vue';
+import { useRouter } from "vue-router";
 import http from "@/modules/http";
 
 export default {
@@ -100,6 +101,7 @@ export default {
     },
     setup(props) {
         const {proxy} = getCurrentInstance();
+        const router = useRouter();
         // const itemImg = ref({});
         const pList = ref([]);
 
@@ -139,7 +141,7 @@ export default {
         //     }
         // })
 
-        let atag = (t, e) => {
+        let productClicked = (item, e) => {
             if (e.target.tagName == 'INPUT'){
                 // e.stopImmediatePropagation();
                 // e.stopPropagation();  //이것만 했을 때는 a 태그의 클릭이벤트가 select 태그와 겹쳐서 둘다 작동되었음.
@@ -149,6 +151,8 @@ export default {
             //     // e.target.style.color = 'blue';
             //     // e.target.classList.add('pointer-events-none');
             // }
+
+            router.push({name: 'productDetail', query: { product_no: item.product_no }});
         }
 
         const aonmouseleave = e =>{
@@ -160,7 +164,7 @@ export default {
 
         return{
             pList, 
-            aonmouseleave, atag, imageLoad
+            aonmouseleave, productClicked, imageLoad
         }
     }
 
