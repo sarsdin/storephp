@@ -21,18 +21,19 @@
                 <!-- 메뉴 아이콘들 -->
                 <div class="w-96 flex">
                     <div class="flex flex-1 justify-evenly items-center pl-7 pr-0">
-                        <a href="" class="flex flex-col items-center text-xs">
+                        <router-link :to="{name: 'cart'}" @click="storeInfo.rstate++" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                             </svg>
                             장바구니
-                        </a>
-                        <a href="" class="flex flex-col items-center text-xs">
+                        </router-link>
+                        <router-link :to="{name: 'cart'}" @click="storeInfo.rstate++" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
                             </svg>
                             주문조회
-                        </a>
+                        </router-link>
+                        <!-- rstate를 공지사항클릭시 마다 증가시키면 공지사항이 출력되는 router-view를 구분하는 key또한 변경되는 것이므로 재랜더링이 가능해짐. -->
                         <router-link :to="{name:'notice'}" @click="storeInfo.rstate++" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
@@ -85,7 +86,7 @@
 
             <!-- 메가 메뉴 -->
             <transition name="mega-menu-fade">
-                <Megamenu v-show="isVisible"></Megamenu>
+                <Megamenu v-show="isVisible" @닫기클릭="showMenu"></Megamenu>
             </transition>
         </header>
 </template>
@@ -109,10 +110,11 @@ export default {
         const userInfo = useLoginStore()    //전역 stroe
         const storeInfo = useStore()    //전역 stroe
         // const userInfo = inject('userInfo');
-        console.log('Header :>> ', userInfo);
+        console.log('[Header] userInfo: ', userInfo);
 
+        //메가메뉴 토글
         const showMenu = () => {
-            console.log(isVisible.value);
+            console.log('[Header] isvisible.value: ', isVisible.value);
             if (isVisible.value) {
                 isVisible.value = false;
                 console.log("hideMenu-isVisible: "+ isVisible.value);
@@ -122,6 +124,7 @@ export default {
                 console.log("showMenu-isVisible: "+ isVisible.value);
             }
         }
+
         const logoClick = () => {
             router.push('/');
         }
@@ -133,11 +136,13 @@ export default {
         
 
         return {
-            showMenu, isVisible, logoClick, logout, userInfo, storeInfo
+            isVisible,  userInfo, storeInfo,
+            showMenu, logoClick, logout
         }
     }
 }
 </script>
+
 <style scoped>
         /* 메가메뉴 페이드 아웃 애니메이션 */
     .mega-menu-fade-enter-active, .mega-menu-fade-leave-active {

@@ -24,7 +24,7 @@ class Productc extends Controller
         for ($i=0; $i<count($resData); $i++) {
             $product_image = $productImg->where('product_no', $resData[$i]['product_no'])->findColumn('stored_file_name');
             $resData[$i]['product_image'] = $product_image;
-            log_message("debug", '[Productc]:pImage $item: '.print_r($resData[$i], true));
+            log_message("debug", '[Productc]:pList $resData[$i]: '.print_r($resData[$i], true));
         }
 
 //        foreach ($resData as $item ){ //각 상품정보당 이미지를 불러와서 새속성'product_image'에 넣어준다.
@@ -38,8 +38,28 @@ class Productc extends Controller
         return $res->setJSON($resData);
     }
 
-    //상품 이미지 가져오기
-    public function pImage() :ResponseInterface
+    //todo: megamenu누를시 해당하는 메뉴의 카테고리 데이터를 전달하는 메소드 작성하기.
+    public function menuProductList() :ResponseInterface
+    {
+        $req = $this->request; //get() - 응답줄 url을 입력하면 response interface객체를 반환함
+        $res = $this->response;
+        $product = new Product();
+        $productImg = new Product_image();
+
+        $resData = $product->where('category_code', $req->getVar('category_code'))->findAll();
+        log_message("debug", '[Productc]:menuProductList category_code: '.print_r($req->getVar(), true));
+        log_message("debug", '[Productc]:menuProductList category_code: '.print_r($req->getVar('category_code'), true));
+        for ($i=0; $i<count($resData); $i++) {
+            $product_image = $productImg->where('product_no', $resData[$i]['product_no'])->findColumn('stored_file_name');
+            $resData[$i]['product_image'] = $product_image;
+        }
+        log_message("debug", '[Productc]:menuProductList $resData[$i] : '.print_r($resData, true));
+
+        return $res->setJSON($resData); //$resData에 데이터가 없어도 [] 은 반환됨(findAll default).
+    }
+
+    //상품 이미지 가져오기 -- 사용 안하는 듯??
+    public function pImage() :ResponseInterface  //현재 노사용
     {
         $req = $this->request; //get() - 응답줄 url을 입력하면 response interface객체를 반환함
         $res = $this->response;

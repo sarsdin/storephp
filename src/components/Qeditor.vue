@@ -1,6 +1,6 @@
 <template>
 
-<div class="w-full">
+<!-- <div class="w-full"> -->
     <!-- <q-editor
         model-value="v-model='content'"
         :readonly="false"
@@ -129,7 +129,7 @@
     </template> -->
     
     </q-editor>
-</div>
+<!-- </div> -->
 
 </template>
 

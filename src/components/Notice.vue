@@ -138,7 +138,13 @@ export default {
         // }
 
         const createNotice = () => {
-            router.push({name: 'noticeCU', params: { user_id: userInfo.info.id, isUpdate: false }})
+            router.push({
+                name: 'noticeCU',
+                params: {    // params로 넘기면 정상작동은 하나 오류로 표시됨.  :변수 형태로 넘겨도 오류뜬다. 버그인듯..
+                    user_id : userInfo.info.id,
+                    isUpdate : false
+                }
+            });
         }
 
 
