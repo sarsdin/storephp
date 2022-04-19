@@ -11,6 +11,9 @@ class Deliver_address extends \CodeIgniter\Model
         'user_address1',
         'user_address2',
         'user_address3',
+        'user_name',
+        'user_phone',
+        'basic_address'
     ];
     protected $primaryKey = 'address_no';
 }

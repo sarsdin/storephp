@@ -10,7 +10,7 @@ const conflictingClasses = [
     // flex must be treated separately
     "order-first", "order-last", "cursor-not-alowed",
     "cursor-pointer", "block", "inline-block", "text-justify",
-    "hidden", "invisible", "overflow-auto", "overflow-hidden"
+    "hidden", "invisible", "overflow-auto", "overflow-hidden", "bg-white"
   ];
   // The plugin takes an object where the keys are the selectors and the values are the properties (or list of properties) to remove or all properties with "*".
 const removeObj = {

@@ -73,6 +73,7 @@ import { login } from '../modules/auth.js';
 import {useRouter} from "vue-router";
 // import {router} from "../router/router";
 import { useLoginStore } from "@/stores/login";
+import { useStore } from '@/stores/store.js';
 
 export default {
     name: "Login",
@@ -80,6 +81,7 @@ export default {
 
     setup() {
         const userInfo = useLoginStore()
+        const store = useStore();
         // let userInfo = inject("userInfo");
         let testdata = ref({
             name : '',
@@ -109,10 +111,12 @@ export default {
             }).then(response =>{
                 const res =  response.data;
                 console.log("Login->res.data: " + res, res);
-                if (res.result == true) {
+                if (res.result != false) {
                     alert(res.msg);
                     userInfo.setLstate('logined');  //전역 로그인모듈 객체의 상태를 변경
                     userInfo.setInfo(userid.value); //마찬가지로 전역 객체에 유저id정보를 갱신
+                    userInfo.info.user = res.result; //회원정보를 store에 저장!
+                    store.cartStateMutation();
 
                     router.push('/');
 

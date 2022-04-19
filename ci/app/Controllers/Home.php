@@ -123,7 +123,7 @@ class Home extends BaseController
 
         if ($isUser != null ) {
             $resData = [
-                'result' => true,
+                'result' => $isUser,
                 'msg' => $isUser['user_id'].'님 환영합니다.'
             ];
             if (count($users->where('user_pwd', $user['user_pwd'])->where('user_id', $user['user_id'])->findAll()) <= 0) {

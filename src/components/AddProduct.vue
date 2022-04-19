@@ -20,10 +20,10 @@
                 <table class="min-w-full w-full divide-y divide-gray-200 table-fixed dark:divide-gray-700">
                     <thead class="bg-gray-100 dark:bg-gray-700">
                     <tr>
-                        <th v-show="true" scope="col" class="p-4 w-12">
+                        <th scope="col" class="p-4 w-12">
                             <div class="flex items-center">
                                 <input id="checkbox-search-all" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                <label for="checkbox-search-all" class="sr-only">checkbox</label>
+                                <!-- <label for="checkbox-search-all" class="sr-only">checkbox</label> -->
                             </div>
                         </th>
                         <th scope="col" class="w-10 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
@@ -53,11 +53,11 @@
                     <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
                     <!-- <router-link :to="{ name : 'noticeContent', params: { no: item.no } }"  class="w-full" > 이건 힘들지..css수정도 힘들고 -->
                         <tr v-for="item in addProduct" :key="item.product_no" @click="rowClicked(item, $event)" class="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                            <td v-show="true" class="p-4 w-4">
+                            <td class="p-4 w-4">
                                 <div class="flex items-center">
-                                    <input id="checkbox-search-1" type="checkbox"
+                                    <input @click="checkBoxClicked(item, $event)" type="checkbox" name="productDeleteSelectBox"
                                         class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                    <label for="checkbox-search-1" class="sr-only">checkbox</label>
+                                    <!-- <label for="checkbox-search-1" class="sr-only">checkbox</label> -->
                                 </div>
                             </td>
                             <td class="py-3 px-3 w-16 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
@@ -146,7 +146,11 @@ export default {
         http.get("/productc/pList").then(res => {
             console.log("addProduct:res: ", res.data); //todo: res.data의 price속성들의 값에 , 자리수를 처리해야함.(미완료)
             state.addProduct = res.data;
+            state.addProduct.forEach((item,i,origin) => {
+                origin[i].isDeleteChecked = false;
+            })
         });
+
         //검색버튼 엔터시
         const searchWord = () => {
             // console.log("noticeSearch: ", noticeSearch.value);
@@ -164,7 +168,11 @@ export default {
 
         //줄 클릭시
         const rowClicked = (item, e) => {
-            if (e.target.tagName == 'INPUT'|| e.target.tagName == 'A') { //해당 태그일 경우 이벤트 전파 중지
+            if (e.target.getAttribute('type') == 'checkbox') {
+                e.stopPropagation();
+                return;
+            }
+            if ((e.target.tagName == 'INPUT'|| e.target.tagName == 'A') ) { //해당 태그일 경우 이벤트 전파 중지
                 e.preventDefault();
                 e.stopPropagation();
                 return;
@@ -214,6 +222,16 @@ export default {
             return str.replace(/[^\d]+/g, '');
         }
 
+        const checkBoxClicked = (item, $event) => {
+            // if ($event.target.tagName == 'TR') {
+            item.isDeleteChecked = $event.target.checked;
+            //     $event.preventDefault();
+            //     $event.stopPropagation();
+            // }
+            // return true;
+
+        }
+
 
         return {
             ...toRefs(state),
@@ -222,7 +240,7 @@ export default {
             searchType,
             search,
             passNoForUpdate,
-            searchWord, rowClicked, modifyClicked, inputNumberFormat
+            searchWord, rowClicked, modifyClicked, inputNumberFormat, checkBoxClicked
         };
     }
     
