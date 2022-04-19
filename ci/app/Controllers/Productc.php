@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\Cart;
 use App\Models\Product;
 use App\Models\Product_image;
 use CodeIgniter\Controller;
@@ -24,7 +25,7 @@ class Productc extends Controller
         for ($i=0; $i<count($resData); $i++) {
             $product_image = $productImg->where('product_no', $resData[$i]['product_no'])->findColumn('stored_file_name');
             $resData[$i]['product_image'] = $product_image;
-            log_message("debug", '[Productc]:pList $resData[$i]: '.print_r($resData[$i], true));
+//            log_message("debug", '[Productc]:pList $resData[$i]: '.print_r($resData[$i], true));
         }
 
 //        foreach ($resData as $item ){ //각 상품정보당 이미지를 불러와서 새속성'product_image'에 넣어준다.
@@ -38,7 +39,7 @@ class Productc extends Controller
         return $res->setJSON($resData);
     }
 
-    //todo: megamenu누를시 해당하는 메뉴의 카테고리 데이터를 전달하는 메소드 작성하기.
+    //todo: megamenu누를시 해당하는 메뉴의 카테고리 데이터를 전달하는 메소드 작성하기. (완료)
     public function menuProductList() :ResponseInterface
     {
         $req = $this->request; //get() - 응답줄 url을 입력하면 response interface객체를 반환함
@@ -134,7 +135,7 @@ class Productc extends Controller
             } else {
                 //상품 이미지 입력
                 if ($imgData != null) {
-                    foreach ($imgData['product_image'] as $img) { //받은 이미지파일배열을 반복문으로 돌려 ci기본 upload경로에 저장
+                    foreach ($imgData['product_image'] as $img) { //받은 이미지파일배열을 반복문으로 돌려 ci기본 upload경로(writable/uploads)에 저장
                         if (! $img->hasMoved()) {
                             $originalName = $img->getClientName(); //원래 파일의 이름
                             $filePath =  $img->store(); //store는 기본경로에 날짜폴더를 생성하고 거기에 랜덤이름의 파일을 저장한다. 그 후 저장된 경로를 리턴
@@ -377,6 +378,181 @@ class Productc extends Controller
         }
 
     }
+
+
+    //장바구니 담기 - Contentholder에서
+    public function addProductInCart() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $product = new Product();
+        $cart = new Cart();
+
+        //pno , count, id
+        $data = $req->getVar();
+        log_message('debug', '[addProductInCart] $data: '.print_r($data, true));
+
+        try {
+            //현재 회원이 하나의 상품을 추가했을 때 그 상품이 db에 이미 존재하는지 숫자로 확인한 후, 있다면 그상품의 개수를 가져와서 지금 요청된 숫자와 합해 다시 업데이트함
+            $count = $cart->where('product_no', $data['product_no'])->where('cart_owner',$data['cart_owner'])->countAllResults();
+            if ($count > 0) {
+                $product_count = $cart->where('product_no', $data['product_no'])->where('cart_owner',$data['cart_owner'])->findColumn('product_count');
+                log_message('debug', '[addProductInCart] $product_count: '.print_r($product_count, true));
+                $tmp = [ 'product_count' => $product_count[0] + $data['product_count'] ]; //update될 컬럼과 해당값 지정
+                $result = $cart->where('product_no', $data['product_no'])->where('cart_owner',$data['cart_owner'])->set($tmp)->update();
+                log_message('debug', '[addProductInCart] $result: '.print_r($result, true));
+            } else {
+                $result = $cart->insert($data);  //상품이 새로 담긴 상품이라면 추가. 입력된 recode의 기본키 반환됨.
+            }
+            log_message('debug', '[addProductInCart] $result: '.print_r($result, true));
+
+            if ($result === false) {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => $cart->errors()
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => true,
+                    'msg' => '장바구니에 상품을 담았습니다.'
+                ]);
+            }
+
+        }catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+    //장바구니 담기 - Cart에서
+    public function addProductInCartAtCartPage() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $product = new Product();
+        $cart = new Cart();
+
+        //pno , count, id
+        $data = $req->getVar();
+        log_message('debug', '[addProductInCart] $data: '.print_r($data, true));
+
+        try {
+            //현재 회원이 하나의 상품을 추가했을 때 그 상품이 db에 이미 존재하는지 숫자로 확인한 후, 있다면 그상품의 개수를 가져와서 지금 요청된 숫자와 합해 다시 업데이트함
+            $count = $cart->where('product_no', $data['product_no'])->where('cart_owner',$data['cart_owner'])->countAllResults();
+            if ($count > 0) {
+                $tmp = [ 'product_count' => $data['product_count'] ]; //update될 컬럼과 해당값 지정
+                $result = $cart->where('product_no', $data['product_no'])->where('cart_owner',$data['cart_owner'])->set($tmp)->update();
+                log_message('debug', '[addProductInCart] $result: '.print_r($result, true));
+            }
+            log_message('debug', '[addProductInCart] $result: '.print_r($result, true));
+
+            if ($result === false) {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => $cart->errors()
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => true,
+                    'msg' => '장바구니에 상품을 담았습니다.'
+                ]);
+            }
+
+        }catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+    //장바구니 목록 가져오기
+    public function getCart() :ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $product = new Product();
+        $productImg = new Product_image();
+        $cart = new Cart();
+
+        $data = $req->getVar();
+        log_message('debug', '[getCart] $data: '.print_r($data, true));
+
+        try {
+            $resData = $cart->join('product', 'product.product_no = cart.product_no')->where('cart_owner', $data['cart_owner'])->findAll();
+            log_message('debug', '[getCart] $result: '.print_r($resData, true));
+
+            for ($i=0; $i<count($resData); $i++) {
+                $product_image = $productImg->where('product_no', $resData[$i]['product_no'])->findColumn('stored_file_name');
+                $resData[$i]['product_image'] = $product_image;
+            }
+
+            return $res->setJSON($resData);
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+    //장바구니에서 상품 삭제
+    public function deleteCart(): ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $cart = new Cart();
+
+        $data = $req->getVar();
+        log_message('debug', '[deleteCart] $data: '.print_r($data, true));
+
+        try {
+            $resData = $cart->delete($data['cart_no']);
+
+            if ($resData === false) {
+                return $res->setJSON([
+                    'result' => $resData,
+                    'msg' => '장바구니 삭제에 실패했습니다.'
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => true,
+                    'msg' => '장바구니 삭제 성공!'
+                ]);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+    //장바구니에서 선택된 상품 모두 삭제
+    public function deleteCheckedCart(): ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $cart = new Cart();
+
+        $data = $req->getVar();
+        log_message('debug', '[deleteCheckedCart] $data: '.print_r($data, true));
+
+        try {
+            $resData = $cart->whereIn('cart_no', $data['cart_numbers'])->delete();
+
+            if ($resData === false) {
+                return $res->setJSON([
+                    'result' => $resData,
+                    'msg' => '장바구니 삭제에 실패했습니다.'
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => true,
+                    'msg' => '장바구니 삭제 성공!'
+                ]);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+
+
 
 
 

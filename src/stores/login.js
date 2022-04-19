@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import {reactive, ref} from "vue";
+import http from '@/modules/http'
 
 // export const useLoginStore = defineStore('loginStore', ()=>{
 
@@ -31,7 +32,8 @@ export const useLoginStore = defineStore('loginStore', {
         return {
             lstate : 'not',      //로그인상태: 기본not , 로그인 logined
             info : {              //로그인하면 이 값이 setInfo()를 사용하여 업데이트됨
-                id: ''
+                id: '',
+                user: {}
             },
         }
     },

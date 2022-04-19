@@ -11,6 +11,8 @@ import contentholder from "../components/Contentholder.vue";
 import addproduct from "../components/AddProduct.vue";
 import productDetail from "../components/ProductDetail.vue";
 import cart from "../components/Cart.vue";
+import payment from "../components/Payment.vue";
+import tos from "../components/Tos.vue";
 
 
 const routes = [
@@ -71,6 +73,11 @@ const routes = [
                 name: 'cart',
                 components: { home: cart }
             },
+            {
+                path: 'payment',
+                name: 'payment',
+                components: { home: payment }
+            }
 
             
         ],
@@ -96,6 +103,13 @@ const routes = [
         name: 'join',
         components: {
             default: join
+        }
+    },
+    {
+        path: '/tos',
+        name: 'tos',
+        components: {
+            default: tos
         }
     }
 ]
