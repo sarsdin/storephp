@@ -14,7 +14,7 @@ class Notice_reply extends \CodeIgniter\Model
         'notice_reply_deletedate',
         'parent_reply_no',
         'parent_reply_writer',
-        'reply_order',
+        'reply_order_in_group',
         'reply_group'
     ];
     protected $primaryKey = 'notice_reply_no';

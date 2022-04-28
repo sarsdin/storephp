@@ -5,7 +5,7 @@ namespace App\Models;
 class Users extends \CodeIgniter\Model
 {
     protected $table = 'users';
-    protected $allowedFields = ['user_id', 'user_pwd', 'user_name', 'user_phone', 'user_email', 'user_nick', 'user_profile', 'email_check', 'user_role', 'user_grade','user_insertdate','user_deletedate'];
+    protected $allowedFields = ['user_id', 'user_pwd', 'user_name', 'user_phone', 'user_email', 'user_nick', 'user_profile', 'email_check', 'user_role', 'user_grade','user_insertdate','user_deletedate','session_id', 'oauth_type'];
     protected $primaryKey = 'user_id';
     protected $validationRules = [
         'user_id' => 'required|alpha_numeric_space|min_length[3]|is_unique[users.user_id]',

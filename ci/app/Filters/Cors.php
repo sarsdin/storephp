@@ -25,12 +25,21 @@ class Cors implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Requested-Method, Authorization");
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PATCH, PUT, DELETE");
-        $method = $_SERVER['REQUEST_METHOD'];
+        //Cors 설정 부분 - 코드이그나이터4의 filter 기능을 이용해서 각 request 의 http 헤더에 추후 응답할때 어떤
+        //리소스를 허용하는지에 대한 정보를 추가하여 준다.
+
+        //(허용할) 들어오는 요청의 출처를 적는 곳. *은 모든 출처(요청한곳)에 이 서버의 리소스 접근을 허용한다는 뜻
+        header("Access-Control-Allow-Origin: *"); //http://192.168.112.128:80
+//        header("Access-Control-Allow-Credentials: true"); //cookie 허용인데 Origin 과는 같이 못쓰는 옵션
+        //어떤 헤더들을 허용할지 명시하는 곳.
+        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Content-Length, Accept-Encoding, Accept, Access-Control-Requested-Method, Authorization, X-CSRF-Token, Cookie");
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PATCH, PUT, DELETE"); //어떤 메소드를 허용할지 대한 곳곳
+       $method = $_SERVER['REQUEST_METHOD'];
         if($method == "OPTIONS"){
             die();
+            //post,get,head 등의 요청(simple request)가 아닌 일반요청은 요청전 사전 request란 것을 먼저 보내는데, 여기에 OPTIONS 메소드를 사용한다.
+            //Access-Control-Allow-Headers, Access-Control-Allow-Methods, Origin 이 3가지를 판단하여 서버는 일반요청을 보내도 된다고 판단하면
+            //200 ok 를 클라에 보내고 정상적인 일반요청이 이루어지게 된다.
         }
     }
 

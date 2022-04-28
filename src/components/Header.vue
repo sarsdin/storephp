@@ -34,7 +34,7 @@
                             </div>
                             장바구니
                         </router-link>
-                        <router-link :to="{name: 'cart'}" @click="storeInfo.rstate++" class="flex flex-col items-center text-xs">
+                        <router-link :to="{name: 'orderCheck'}" @click="storeInfo.rstate++" class="flex flex-col items-center text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
                             </svg>
@@ -98,11 +98,12 @@
         </header>
 </template>
 <script>
-import {inject, ref} from 'vue'
+import {getCurrentInstance, inject, proxyRefs, ref} from 'vue'
 import Megamenu from './Megamenu.vue';
 import { useRouter } from 'vue-router';
 import { useLoginStore } from '@/stores/login.js';
 import { useStore } from '@/stores/store.js';
+import http from '@/modules/http'
 
 export default {
     name: 'Header',
@@ -112,6 +113,7 @@ export default {
     // inject: ["userInfo"],
 
     setup(props) {
+        const {proxy} = getCurrentInstance();
         const isVisible = ref(false);
         const router = useRouter();
         const userInfo = useLoginStore()    //전역 stroe
@@ -136,12 +138,38 @@ export default {
             router.push('/');
         }
         const logout = () => {
-            userInfo.setLstate('not'); //dev툴이나 vetur에서 인식을 못하는중
-            userInfo.setInfo('');
-            storeInfo.rstate++;
-            router.push('/');
-            storeInfo.$reset();
-            // router.go();
+            
+            http.defaults.withCredentials = true;
+            http.get('/home/logout', {
+                params: {
+                    user_id: userInfo.info.id,
+                    session_id: userInfo.info.session_id
+                },
+                headers: { 
+                    'content-Type': 'application/json',
+                    "Accept": "/",
+                    // "Cache-Control": "no-cache",
+                    // "Cookie": 'ci_session_='+ userInfo.info.session_id,
+                },
+                credentials: 'same-origin',
+                withCredentials: true,
+
+            }).then((res) => {
+                userInfo.setLstate('not'); //dev툴이나 vetur에서 인식을 못하는중
+                userInfo.setInfo('');
+                window.localStorage.clear();
+                if (res.data == true) {
+                    alert(res.data.msg);
+                } else {
+                    alert(res.data.msg);
+                }
+                proxy.$log('[Header] logout res: ', res.data)
+
+                storeInfo.rstate++;
+                router.push('/');
+                storeInfo.$reset();
+                // router.go();
+            }).catch(error => proxy.$log('[Header] logout error: ',error.response.data))
         }
         
 
