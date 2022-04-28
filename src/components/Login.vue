@@ -18,16 +18,21 @@
                         <!-- {{testdata.name}} 수염변수는 태그밖에서만 인식가능! 안은 v-bind로 -->
                     </div>
                     <!-- 비밀번호 -->
-                    <div class="mb-6">
+                    <div class="mb-3">
                         <div class="flex justify-between mb-2">
                             <label for="password" class="text-sm text-gray-600 dark:text-gray-400">비밀번호</label>
                             <a href="#!" class="text-sm text-gray-400 focus:outline-none focus:text-indigo-500 hover:text-indigo-500 dark:hover:text-indigo-300">비밀번호를 잊었다면?</a>
                         </div>
-                        <input v-model="passwd" type="password" name="password" id="password" placeholder="비밀번호를 입력해주세요." class="w-full px-3 py-2 placeholder-gray-300 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-indigo-100 focus:border-indigo-300 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500 dark:border-gray-600 dark:focus:ring-gray-900 dark:focus:border-gray-500" />
+                        <input v-model="passwd" v-on:keyup.enter="login()" type="password" name="password" id="password" placeholder="비밀번호를 입력해주세요." class="w-full px-3 py-2 placeholder-gray-300 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-indigo-100 focus:border-indigo-300 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500 dark:border-gray-600 dark:focus:ring-gray-900 dark:focus:border-gray-500" />
                     </div>
+                    <!-- 자동로그인 -->
+                    <p class="text-sm text-center text-gray-400">
+                        <!-- Don&#x27;t have an account yet? -->자동로그인&nbsp;
+                        <input v-model="isAutoLogin" type="checkbox" class="font-semibold text-indigo-500 focus:text-indigo-600 focus:outline-none focus:underline">
+                    </p>
                     <!-- 로그인하기 버튼 -->
                     <div class="mb-6">
-                        <button v-on:click="login" class="w-full px-3 py-4 text-white bg-gray-500 rounded-md hover:bg-indigo-600 focus:outline-none duration-100 ease-in-out">로그인</button>
+                        <button v-on:click="login()" class="w-full px-3 py-4 text-white bg-gray-500 rounded-md hover:bg-indigo-600 focus:outline-none duration-100 ease-in-out">로그인</button>
                     </div>
                     <!-- 회원가입 -->
                     <p class="text-sm text-center text-gray-400">
@@ -68,7 +73,7 @@
 
 <script>
 import http from '../modules/http.js';
-import { inject, ref, reactive, onMounted } from 'vue';
+import { inject, ref, reactive, onMounted, getCurrentInstance } from 'vue';
 import { login } from '../modules/auth.js';
 import {useRouter} from "vue-router";
 // import {router} from "../router/router";
@@ -80,43 +85,59 @@ export default {
     // inject: ["userInfo"],
 
     setup() {
+        const {proxy} = getCurrentInstance();
         const userInfo = useLoginStore()
         const store = useStore();
+        const router = useRouter(); //inject():useRouter()는 setup()내에서 선언되어야 작동함. setup내의 자식함수에서는 동작안함.
         // let userInfo = inject("userInfo");
-        let testdata = ref({
-            name : '',
-            type : '',
-            age : ''
-        });
         let userid = ref("");
         let passwd = ref("");
-        // console.log(userid.value +" " + passwd.value)
+        let isAutoLogin = ref(false);
 
-        // http.get('/home/testRes').then(response =>{
-        //     console.log(response.data);
-        //     // testdata.value.name = response.data.name;
-        //     testdata.value = response.data;
-        //     console.log(testdata.value);
-        // }).catch(error =>{
-        //     console.error(error.response);
-        // });
 
-        const router = useRouter(); //inject():useRouter()는 setup()내에서 선언되어야 작동함. setup내의 자식함수에서는 동작안함.
+        //로그인 처리
         const login = ()=>{
-            http.post('/home/login',{
-                user_id:userid.value,
-                user_pwd:passwd.value
-            },{
-                headers: { "Content-Type": "application/json; charset=UTF-8"},
-            }).then(response =>{
+            http.defaults.withCredentials = true;
+            http.get('/home/login',{
+                params:{
+                    user_id:userid.value,
+                    user_pwd:passwd.value,
+                    isAutoLogin: isAutoLogin.value
+                },
+                withCredentials: true,
+                headers: { 
+                    'content-Type': 'application/json',
+                    "Accept": "/",
+                },
+                credentials: 'same-origin'
+                
+            },
+            // {
+            //     // headers: { "Content-Type": "application/json; charset=UTF-8"},
+            //     withCredentials: true
+            // }
+            ).then(response =>{
                 const res =  response.data;
-                console.log("Login->res.data: " + res, res);
+                console.log("[Login] res.data: ", res);
+
                 if (res.result != false) {
                     alert(res.msg);
                     userInfo.setLstate('logined');  //전역 로그인모듈 객체의 상태를 변경
-                    userInfo.setInfo(userid.value); //마찬가지로 전역 객체에 유저id정보를 갱신
+                    userInfo.setInfo(res.sessionInfo.user_id); //마찬가지로 전역 객체에 유저id정보를 갱신
                     userInfo.info.user = res.result; //회원정보를 store에 저장!
-                    store.cartStateMutation();
+                    userInfo.info.session_id = res.sessionInfo.session_id; //세션id를 store에 저장
+                    store.cartStateMutation();      //store 장바구니 상태 갱신
+                    
+                    //자동로그인일경우 로컬스토리지에 저장
+                    if (res.sessionInfo.isAutoLogin == true) {
+                        window.localStorage.setItem('isAutoLogin', true);
+                        window.localStorage.setItem('session_id', res.sessionInfo.session_id);
+                    } else {
+                        window.localStorage.removeItem('isAutoLogin');
+                        window.localStorage.removeItem('session_id');
+                        // window.localStorage.clear();
+                    }
+
 
                     router.push('/');
 
@@ -125,18 +146,19 @@ export default {
                 }
 
             }).catch(error =>{
-                console.error("에러발생:",error.response.data);
+                console.error("[Login] 에러발생: ",error.response.data);
             })
         };
 
-        onMounted(() => {
-            const login2 = ()=>{
-                console.log("login2 clicked: "+ userid.value);
-            }
-        });
+        // onMounted(() => {
+        //     const login2 = ()=>{
+        //         console.log("login2 clicked: "+ userid.value);
+        //     }
+        // });
 
         return {
-            testdata, userid, passwd, login
+            userid, passwd, isAutoLogin, 
+            login
         }
     }
 }

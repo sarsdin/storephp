@@ -4,44 +4,54 @@ namespace App\Controllers;
 
 
 use App\Models\Notice;
+use App\Models\Notice_reply;
 use App\Models\PostTest;
 use App\Models\Users;
+use CodeIgniter\Cookie\Cookie;
+use CodeIgniter\Cookie\CookieInterface;
 use CodeIgniter\Database\Exceptions\DataException;
 use CodeIgniter\HTTP\Response;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\HTTP\IncomingRequest;
 use Config\Paths;
+use DateTime;
+use DateTimeZone;
+use Exception;
 
 class Home extends BaseController
 {
-    public $testProps;
+//    public $testProps;
+    public $encrypter;
+//    public $session;
 
     public function __construct()
     {
-        $tmpString = mb_str_split("문자열랜덤생성하기우후훗");
-        shuffle($tmpString);
-        $tmpString = implode('', $tmpString);
-        $resData = [];
+        $this->encrypter = \Config\Services::encrypter();
 
-        $data = [
-            "no" => 0,
-            "title" => "제목나오는곳",
-            "writer" => substr($tmpString,0, 3), //php에서 한글문자를 substr로 자르면 깨짐. 이유는 한글이 utf-8에서
-            "date" => date('Y-m-d H:i:s'),                //3byte이기때문.
-            "hit" => 123,
-            "content" => "본문"
-        ];
-
-        for ($i=0; $i<10; $i++) {
-            $data['no'] = $i;
-            $data['title'] = "제목나오는곳".$i;
-            $data['writer'] = mb_substr($tmpString, 0, 3); //그래서 멀티byte단위의 문자열처리를 하기위해 mbstring 확장함수를 사용해야한다.
-            $data['date'] = date('Y-m-d H:i:s');
-            $data['hit'] = $i*$i;
-            $data['content'] = "content".$i;
-            array_push($resData, $data);
-        }
-        $this->testProps = $resData;
+//        $tmpString = mb_str_split("문자열랜덤생성하기우후훗");
+//        shuffle($tmpString);
+//        $tmpString = implode('', $tmpString);
+//        $resData = [];
+//
+//        $data = [
+//            "no" => 0,
+//            "title" => "제목나오는곳",
+//            "writer" => substr($tmpString,0, 3), //php에서 한글문자를 substr로 자르면 깨짐. 이유는 한글이 utf-8에서
+//            "date" => date('Y-m-d H:i:s'),                //3byte이기때문.
+//            "hit" => 123,
+//            "content" => "본문"
+//        ];
+//
+//        for ($i=0; $i<10; $i++) {
+//            $data['no'] = $i;
+//            $data['title'] = "제목나오는곳".$i;
+//            $data['writer'] = mb_substr($tmpString, 0, 3); //그래서 멀티byte단위의 문자열처리를 하기위해 mbstring 확장함수를 사용해야한다.
+//            $data['date'] = date('Y-m-d H:i:s');
+//            $data['hit'] = $i*$i;
+//            $data['content'] = "content".$i;
+//            array_push($resData, $data);
+//        }
+//        $this->testProps = $resData;
     }
 
     //php 기본 설정 정보 페이지 로딩
@@ -98,39 +108,153 @@ class Home extends BaseController
 //        return $res->setJSON($result);
     }
 
-    //로그인 처리
-    public function login() : ResponseInterface
+
+    //자동로그인일경우 처리
+    public function autoLogin() : ResponseInterface
     {
+        $session = \Config\Services::session();
         $users = new Users();
         $req = $this->request;
         $res = $this->response;
 
-        log_message("debug", "ddd req: ". print_r($req, true));
-        log_message("debug", "request getjson: ". print_r($req->getJSON(true), true));
-        log_message("debug", "requesturi: ".$req->uri);
-        log_message("debug", "requestURI path: " . $req->getUri()->getPath());
-        log_message("info", "requestData.userid: ".$req->getJSON()->user_id);
+        $data = $req->getVar();
+        log_message("debug", "[Home] autoLogin \$data ".print_r($data, true));
 
-        if ($this->request){
-            if ($this->request->getJSON()) {
-                $json = $this->request->getJSON();
-                log_message("info", "requestJsonData.passwd: ".$json->user_pwd);
+        if ($session->has($data['session_id'])) {
+            $userId = $session->get($data['session_id'])['user_id'];
+            $isUser = $users->find($userId);
+
+            if ($isUser != null ) {
+                $resData = [
+                    'result' => $isUser,
+                    'msg' => $isUser['user_id'].'님 환영합니다.'
+                ];
+
+                //세션 정보 응답할 데이터 배열에 추가
+                $resData['sessionInfo'] = $session->get($data['session_id']);
+                return $res->setJSON($resData);
+
+            } else {
+                $resData = [
+                    'result' => false,
+                    'error' => $userId,
+                    'msg' => '해당 아이디는 존재하지 않습니다.'
+                ];
+                return $res->setJSON($resData);
             }
+
+
+        } else {
+            //세션이 설정한 자동로그인 기간이 5분이 지나 만료되었을때
+            $resData = [
+                'result' => false,
+                'msg' => '해당 세션정보는 존재하지 않습니다. 자동로그인을 수행할 수 없습니다. 로그인을 해주세요.'
+            ];
+            return $res->setJSON($resData);
         }
 
-        $user = $req->getJson(true);
-        $isUser = $users->find($user['user_id']);
+
+    }
+
+
+    //로그인 처리
+    /**
+     * @throws Exception
+     */
+    public function login() : ResponseInterface
+    {
+//        $session = \Config\Services::session();
+        $session = session();
+        $users = new Users();
+        $req = $this->request;
+        $res = $this->response;
+
+        log_message("debug", "[Home] login req: ". print_r($req, true));
+        log_message("debug", "[Home] login request getjson: ". print_r($req->getJSON(true), true));
+        log_message("debug", "[Home] login requesturi: ".$req->uri);
+        log_message("debug", "[Home] login requestURI path: " . $req->getUri()->getPath());
+
+//        if ($this->request){
+//            if ($this->request->getJSON()) {
+//                $json = $this->request->getJSON();
+//                log_message("info", "[Home] login requestJsonData.passwd: ".$json->user_pwd);
+//            }
+//        }
+
+//        $data = $req->getJson(true);
+        $data = $req->getVar();
+        log_message("debug", "[Home] login \$data: " . print_r($data, true));
+        $isUser = $users->find($data['user_id']);
 
         if ($isUser != null ) {
             $resData = [
                 'result' => $isUser,
                 'msg' => $isUser['user_id'].'님 환영합니다.'
             ];
-            if (count($users->where('user_pwd', $user['user_pwd'])->where('user_id', $user['user_id'])->findAll()) <= 0) {
+            if (count($users->where('user_pwd', $data['user_pwd'])->where('user_id', $data['user_id'])->findAll()) <= 0) {
                 $resData['result'] = false;
                 $resData['error'] = 'pwd';
                 $resData['msg'] = '비밀번호가 일치하지 않습니다.';
+                return $res->setJSON($resData);
             }
+
+//            $session->destroy();
+
+            //세션 정보 추가
+            if (!session_id()){
+//                ini_set('session.cache_expire', 3600);
+//                ini_set('session.gc_maxlifetime', WEEK);
+//                $session->start();
+            }
+            $sessionId = session_id();
+            $session->set('sessionInfo', [
+                'user_id' => $isUser['user_id'],
+                'user_email' => $isUser['user_email'],
+                'logged_in' => true,
+                'ip' => $_SERVER['REMOTE_ADDR'],
+                'session_id' => session_id(),
+            ]);
+            log_message("debug", "[Home] login Current \$sessionId: ".print_r($sessionId, true));
+            log_message("debug", "[Home] login Current sessionData: ".print_r($session->get('sessionInfo'), true));
+
+            //자동로그인일 경우 처리
+            log_message("debug", "[Home] login \$data['isAutoLogin']: ".print_r($data['isAutoLogin'], true));
+            if ($data['isAutoLogin'] != 'false') {
+                $session->set('isAutoLogin', true);
+                $session->markAsTempdata('sessionInfo', 30); //추가한 세션을 만료일이 있는 세션으로 변경 - 자동로그인은 1주일만 유지되게 설정 - 5분으로 변경 테스트위함.
+//                $resData['sessionInfo']['isAutoLogin'] = true;
+            }
+            //세션 정보 응답할 데이터 배열에 추가
+            $resData['sessionInfo'] = $session->get('sessionInfo');
+
+
+            $testEncript  = 'styner14@naver.com';
+            $testE_res = $this->encrypter->encrypt($testEncript);  //decrypt
+            $cookie = new Cookie(
+                'test_token',
+                $testE_res,
+                [
+                    'expires' => time() + 600,//new DateTime('+5 minutes', new DateTimeZone('Asia/Seoul')),
+                    'path' => '/',
+                    'secure' => false,
+                    'prefix' => '_ci_test_',
+                    'httponly' => false,
+//                    'samesite' => 'none'
+                ]
+            );
+            $cookie2 = [
+                'name' => 'test_token',
+                'value' => '$testE_res',
+                'expires' =>  time() + 300,//new DateTime('+1 hours', new DateTimeZone('Asia/Seoul')),
+                'path' => '/',
+                'secure' => false,
+                'prefix' => '_ci_cookie2_',
+                'httponly' => false,
+//                'samesite' => 'none'//CookieInterface::SAMESITE_NONE
+            ];
+
+//            return $res->setHeader('cookietest',$cookie->toHeaderString())->setCookie($cookie2)->setJSON($resData);
+            return $res->setJSON($resData);
 
         } else {
             $resData = [
@@ -146,16 +270,156 @@ class Home extends BaseController
     }
 
 
+    //로그아웃 클릭시
+    public function logout() : ResponseInterface
+    {
+//        $session = \Config\Services::session();
+        $session = session();
+//        session_start();
+        $users = new Users();
+        $req = $this->request;
+        $res = $this->response;
+
+//        $cookieName = $_COOKIE('ci_session_');
+        $is_session_exist = $session->get('sessionInfo') != null;
+        $tmp = $is_session_exist ? "세션 값이 존재합니다." : "세션 값이 없습니다."; 
+        log_message("debug", "[Home] logout \$session->get('sessionInfo'): ".print_r($session->get('sessionInfo'), true));
+        log_message("debug", "[Home] logout \$tmp: ".print_r($tmp, true));
+
+//        $data = $req->getJSON(true);
+        $data = $req->getVar();
+        log_message("debug", "[Home] logout \$data: ".print_r($data, true));
+
+
+        if ($session->has('sessionInfo')) { //(!session_id())
+//            $session->remove('sessionInfo'.$data['session_id']);
+//            $session->destroy();
+            $session->stop();
+
+            $resData = [
+                'result' => true,
+                'msg' => '로그아웃 하였습니다'
+            ];
+
+            return $res->setJSON($resData);
+
+        } else {
+            $session->stop();
+
+            $resData = [
+                'result' => false,
+                'msg' => '로그아웃을 실패했거나 세션이 만료되었습니다.'
+            ];
+            return $res->setJSON($resData);
+        }
+    }
+
+    //세션 있는지 확인
+    public function isSession() : ResponseInterface
+    {
+//        if (session_id() != null) {
+//            log_message("debug", "[Home] isSession 세션이 존재하지 않음. 그래서 생성 ");
+//            $session = session();
+//            $session->stop();
+//        }
+        $res = $this->response;
+        log_message("debug", "[Home] isSession:".print_r(session_id(), true));
+
+        $resData = null;
+        if (!session_id()) {
+            $resData = [
+                'result' => false,
+                'session_id' => session_id(),
+                'msg' => '세션이 없음.'
+            ];
+
+        } else {
+            $resData = [
+                'result' => true,
+                'session_id' => session_id(),
+//                'sessionInfo' => $session->get('sessionInfo'),
+                'msg' => '세션이 존재.'
+            ];
+        }
+        return $res->setJSON($resData);
+    }
+
+
     //공지 게시판 글전체 불러오기
     public function notice() : ResponseInterface
     {
+        $db = \Config\Database::connect();
         $notice = new Notice();
         $res = $this->response;
-//        $qst = $this->request->getGet();
+        $req = $this->request;
+//        $resData = $notice->findAll();
+//        return $res->setJSON($resData);
+        $data = $req->getVar();
+        log_message("debug", "notice:\$data: ".print_r($data, true));
+        $totalItems = 0;
 
-        $resData = $notice->findAll();
+        try {
+            $sql = " select * from (
+                        select @rownum:=@rownum+1 as rownum, i.* from (
+                            select * from notice ";
 
-        return $res->setJSON($resData);
+            if ($data['searchValue'] != '') {
+                if ($data['searchType'] == '제목') {
+//                    $qq = '451';$data['searchValue'],
+//                    $sql = $sql." where notice_title =  ?  ";
+//                    $sql = $sql." where notice_title like '%'|| ? ||'%' ";  //오라클 전용 문법
+                    $sql = $sql." where notice_title like concat_ws(?, '%', '%') "; //mysql 대체문법
+//                    $sql = $sql." where notice_title like '%$qq%'  ";
+//                    $sql = $sql." where notice_title like ?  ";
+
+                } elseif ($data['searchType'] == '내용'){
+                    $sql = $sql." where notice_content like %?% ";
+                }
+            }
+            $sql = $sql." order by notice_no desc
+                        ) i, (select @rownum:=0) tmp ) o
+                    where o.rownum between ? and ? ";
+
+
+            log_message("debug", "notice:\$sql: ".print_r($sql, true));
+
+//            $sql2 = "select * from notice where notice_title = '공지제목432' order by notice_no desc limit 0, 33";
+//            $notice->select('*')->like('notice_title', $data['searchValue'])
+
+            $result = [];
+            //search값 유무에 따라 다른 쿼리바인딩을 실행해야한다. 검색결과에 따른 다른 아이템숫자를 리턴해줘야 페이징시 올바른 페이징이 가능하다.
+            if ($data['searchValue'] != '') {
+                if ($data['searchType'] != '제목') {
+                    $totalItems = $notice->like('notice_title', $data['searchValue'])->countAllResults();
+
+                } elseif ($data['searchType'] != '내용'){
+                    $totalItems = $notice->like('notice_content', $data['searchValue'])->countAllResults();
+                }
+                $result = $notice->db->query($sql, [$data['searchValue'], $data['dbStartNumber'], $data['dbEndNumber']]);
+
+            } else {
+                $totalItems = $notice->countAll();
+                $result = $notice->db->query($sql,[$data['dbStartNumber'], $data['dbEndNumber']]);
+            }
+
+            log_message("debug", "notice:\$result: ".print_r($result->getResult(), true));
+            log_message("debug", "notice:\$result2: ".print_r($result->getResultArray(), true));
+            $result2 = $notice->db->getLastQuery();
+            log_message("debug", "notice:\$result22: ".print_r($result2, true));
+
+
+
+            //결과 반환
+            return $res->setJSON([
+                'result' => $result->getResultArray(),
+                'totalItems' => $totalItems,
+                'msg' => $notice->errors()
+            ]);
+
+        } catch(\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+
     }
 
     //noticeContent 글 상세페이지 불러오기
@@ -352,10 +616,151 @@ class Home extends BaseController
 
 
 
+    //공지 게시판의 총 게시물 수 리턴
+    public function getNoticeTotalItems() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $notice = new Notice();
+
+        $data = $req->getVar();
+        log_message('debug', '[Home] getNoticeTotalItems \$data: '.print_r($data, true));
+
+        try {
+            $result = 0;
+            if ($data['searchValue'] != '') {
+                if ($data['searchType'] != '제목') {
+                    $result = $notice->like('notice_title', $data['searchValue'])->countAll();
+
+                } elseif ($data['searchType'] != '내용'){
+                    $result = $notice->like('notice_content', $data['searchValue'])->countAll();
+                }
+            } else{
+                $result = $notice->countAll();
+            }
+
+            return $res->setJSON($result);
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+    //공지 게시판 게시물 댓글 로드
+    public function noticeReplyLoad() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $noticeReply = new Notice_reply();
+
+        $data = $req->getVar();
+        log_message('debug', '[Home] noticeReplyLoad $data: '.print_r($data, true));
+
+        try {
+            $result = $noticeReply->where('notice_no', $data['notice_no'])
+//                ->where('parent_reply_no', null)
+                ->orderBy('reply_group', 'ASC')
+                ->orderBy('notice_reply_writedate', 'ASC')->findAll();
+
+            return $res->setJSON($result);
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+    //공지 게시판 게시물 대댓글 로드
+    public function noticeAnswerItemsLoad() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $noticeReply = new Notice_reply();
+
+        $data = $req->getVar();
+        log_message('debug', '[Home] noticeAnswerItemsLoad $data: '.print_r($data, true));
+
+        try {
+            $result = $noticeReply->where('notice_no', $data['notice_no'])
+                ->where('reply_group', $data['reply_group'])
+                ->where('parent_reply_no', $data['parent_reply_no'])->findAll();
+
+            return $res->setJSON($result);
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+    //공지 게시판 게시물 댓글 쓰기
+    public function noticeCreateReply() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $noticeReply = new Notice_reply();
+
+        $data = $req->getJSON(true);
+        log_message('debug', '[Home] noticeCreateReply $data: '.print_r($data, true));
+
+        try {
+            $tmp = ['notice_reply_content' => $data['notice_reply_content'],
+                'notice_reply_writer' => $data['notice_reply_writer'],
+                'notice_reply_writedate' => date('Y-m-d H:i:s'),
+                'notice_no' => $data['notice_no']
+            ];
+            log_message('debug', '[Home] noticeCreateReply $data: '.print_r($tmp, true));
+            $noticeReply->db->transStart();
+            $result = $noticeReply->insert($tmp);
+            $result = $noticeReply->where('notice_reply_no', $result)->set('reply_group', $result)->update();
+            $noticeReply->db->transComplete();
+
+            return $res->setJSON($result);
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+    //공지 게시판 게시물 대댓글 쓰기
+    public function noticeCreateReplyAnswer() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $noticeReply = new Notice_reply();
+
+        $data = $req->getJSON(true);
+        log_message('debug', '[Home] noticeCreateReplyAnswer $data: '.print_r($data, true));
+
+        try {
+            $tmp = ['notice_reply_content' => $data['notice_reply_content'],
+                'notice_reply_writer' => $data['notice_reply_writer'],
+                'notice_reply_writedate' => date('Y-m-d H:i:s'),
+                'notice_no' => $data['notice_no'],
+                'reply_group' => $data['reply_group'],
+                'parent_reply_no' => $data['parent_reply_no'],
+                'parent_reply_writer' => $data['parent_reply_writer'],
+            ];
+            log_message('debug', '[Home] noticeCreateReplyAnswer $data: '.print_r($tmp, true));
+            $noticeReply->db->transStart();
+            $result = $noticeReply->insert($tmp);
+//            $result = $noticeReply->where('notice_reply_no', $result)->set('reply_group', $result)->update();
+            $noticeReply->db->transComplete();
+            if ($result == false) {
+                return $res->setJSON($result);
+
+            } else {
+                return $res->setJSON(true);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
 
 
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public function testRes() : \CodeIgniter\HTTP\ResponseInterface

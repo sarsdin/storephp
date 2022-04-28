@@ -12,7 +12,9 @@ import addproduct from "../components/AddProduct.vue";
 import productDetail from "../components/ProductDetail.vue";
 import cart from "../components/Cart.vue";
 import payment from "../components/Payment.vue";
+import paymentComplete from "../components/PaymentComplete.vue";
 import tos from "../components/Tos.vue";
+import orderCheck from "../components/OrderCheck.vue";
 
 
 const routes = [
@@ -77,6 +79,16 @@ const routes = [
                 path: 'payment',
                 name: 'payment',
                 components: { home: payment }
+            },
+            {
+                path: 'paymentComplete',
+                name: 'paymentComplete',
+                components: { home: paymentComplete }
+            },
+            {
+                path: 'orderCheck',
+                name: 'orderCheck',
+                components: { home: orderCheck }
             }
 
             

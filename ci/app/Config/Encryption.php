@@ -23,7 +23,7 @@ class Encryption extends BaseConfig
      *
      * @var string
      */
-    public $key = '';
+    public $key = 'styner14@naver.com_encrypt_key';
 
     /**
      * --------------------------------------------------------------------------

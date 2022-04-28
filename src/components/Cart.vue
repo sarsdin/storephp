@@ -45,7 +45,8 @@
         <div class="flex">
             <div class="">
                 <!-- 목록 시작 -->
-                <div v-for="item in store.cartState" :key="item.product_no" class="flex items-center h-32 border-b border-gray-300">
+                <div v-for="item in store.cartState" :key="item.product_no" class="flex items-center h-32 border-b border-gray-300"
+                    :class="{'!text-slate-300': item.product_stock == 0}">
                     <div class="p-5">
                         <input @click="checkBoxClicked(item)" class="w-4 h-4" type="checkbox" name="allCheck" :checked="item.isChecked" >
                     </div>
@@ -59,6 +60,7 @@
                             <span class="max-h-full overflow-hidden">
                                 {{ item.product_name }}&nbsp;
                                 <span class="text-xs text-gray-400">규격: {{ item.product_spec }}</span> 
+                                
                             </span>
                         </div>
                         <div class="flex relative h-16 p-2">
@@ -69,7 +71,10 @@
                                 <span class="text-slate-500">
                                     {{ Number(item.product_price).toLocaleString('ko-KR') }}원
                                 </span>
-                                <input @change="장바구니추가(item)" v-model.number="item.product_count" class="w-10 border border-zinc-400 text-center" min="1" type="number" name="selectCount" >개
+                                <span v-if="item.product_stock == 0" class="text-lg font-bold text-red-500"> [재고 없음]</span> 
+                                <span v-else>
+                                    <input @change="장바구니추가(item)" v-model.number="item.product_count" class="w-10 border border-zinc-400 text-center" min="1" type="number" name="selectCount" >개
+                                </span>
                                 <button @click="장바구니에서삭제(item)" class="px-1 text-gray-400 transition duration-150 ease-in-out ring-1 focus:ring-1 ring-gray-300
                                 focus:outline-none focus:ring-gray-600" aria-label="product delete" role="button">
                                     <font-awesome-icon :icon="['fas', 'x']" class="text-md text-zinc-400 hover:text-gray-600"></font-awesome-icon>
@@ -167,7 +172,7 @@ export default {
         //전체선택 체크유무에 따른 동작처리
         const allCheck = ($event) => {
             store.cartState.forEach((item,i,origin) => {//전역상태배열안의 체크값들을 순회해서 체크에 따라 상품금액값을 바꿈
-                if (origin[i].isChecked) {
+                if (origin[i].isChecked || origin[i].product_stock == 0 ) { //예외 조건으로 재고가 0일 경우에는 그냥 체크를 해제한다.
                     origin[i].isChecked = false;
                     origin[i].computed_price = 0;
                 } else {

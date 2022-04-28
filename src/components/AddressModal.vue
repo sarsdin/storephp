@@ -41,9 +41,10 @@
                         <font-awesome-icon :icon="['fas', 'map-location-dot']" class="text-gray-400"></font-awesome-icon>
                         <input @click="daumPost" v-model="tmpAddressC" type="text" name="post" placeholder="우편번호 찾기" class="w-full" >
                     </div>
+                    
                     <div id="ss" ref="embed" class="w-full flex justify-center bg-[#ECECEC]">
-                        
-                        </div>
+                    </div>
+
                     <div class="flex items-center text-lg space-x-4">
                         <font-awesome-icon :icon="['fas', 'map-location-dot']" class="text-gray-400"></font-awesome-icon>
                         <input @change="tmpAddress.address2 = $event.target.value" :value="tmpAddress.address2" type="text" name="post" placeholder="상세주소" class="w-full" >
@@ -193,6 +194,7 @@ export default {
             state.배송지선택 = false;
             state.배송지추가 = true;
             state.배송지수정 = false;
+            window.scrollTo({ top: 260, behavior: 'smooth'}); //글 클릭시 맨위로 가기 참고 - messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
         }
         const 배송지초기화면 = () => {
             state.배송지선택 = true;
@@ -276,7 +278,7 @@ export default {
 
         //배송지 선택 클릭시
         const 선택클릭 = (item) => {
-            store.receiverInfo = item;  //store에 배송지주소 입력한다
+            // store.receiverInfo = item;  //store에 배송지주소 입력한다
             context.emit('선택클릭', item); //상위 컴포넌트인 Payment.vue 로 이벤트와 배송지정보 전송
             cancelClicked();            //modal을 닫은 뒤 모달임시변수 초기화
         }

@@ -164,7 +164,7 @@ class App extends BaseConfig
      *
      * @var string
      */
-    public $sessionCookieName = 'ci_session';
+    public $sessionCookieName = 'ci_session_';
 
     /**
      * --------------------------------------------------------------------------
@@ -173,7 +173,7 @@ class App extends BaseConfig
      *
      * The number of SECONDS you want the session to last.
      * Setting to 0 (zero) means expire when the browser is closed.
-     *
+     * session.save_path = "/usr/local/apache2.4/htdocs/ci/writable/session" 을 설정해줘야 ini_set()함수를 사용가능하다!
      * @var int
      */
     public $sessionExpiration = 7200;

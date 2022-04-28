@@ -73,13 +73,18 @@ export const useStore = defineStore('store', {
                     cart_owner: useInfo.info.id
                 }
             }).then((res) => {                      //결과리스트를 가져와서 1개 이상이면 cartCount에 업데이트함. 아니면 0으로 초기화
-                console.log('cartStateMutation res :>> ', res.data);
+                console.log('[store.js]cartStateMutation res :>> ', res.data);
 
                 if (res.data.length > 0) {
                     this.cartCount = res.data.length;
                     this.cartState = res.data;           //받아온 장바구니 정보를 업데이트하고, 각 요소에 isChecked,computed_price를 추가함
                     this.cartState.forEach((item,i,origin) => {
-                        origin[i].isChecked = true; //체크박스 체크유무. 초기값은 체크한 것으로 true
+                        if (origin[i].product_stock == 0) { //받아온 상품의 재고가 없으면 체크해제 유지!
+                            origin[i].isChecked = false;
+                            
+                        } else {
+                            origin[i].isChecked = true; //체크박스 체크유무. 초기값은 체크한 것으로 true
+                        }
                         origin[i].computed_price = origin[i].product_price * origin[i].product_count;
                     })
                 } else{

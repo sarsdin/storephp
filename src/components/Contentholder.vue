@@ -219,7 +219,9 @@ export default {
             router.push({name: 'cart'})
         }
 
+        
         // onMounted(()=>{
+        //     alert(document.cookie );
         // })
 
         return{

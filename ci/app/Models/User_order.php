@@ -15,6 +15,12 @@ class User_order extends \CodeIgniter\Model
         'receiver_name',
         'receiver_phone',
         'request',
+        'receipt_id',
+        'purchased_at',
+        'method',
+        'product_name',
+        'card_name',
+        'verify_valid'
     ];
     protected $primaryKey = 'order_no';
 
@@ -26,5 +32,3 @@ class User_order extends \CodeIgniter\Model
 
 
 }
-
-
