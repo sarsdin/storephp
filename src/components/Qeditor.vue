@@ -33,8 +33,9 @@
     <q-editor
     v-model="qEditorComputed"
     ref="editorRef"
-    placeholder="내용을 입력해주세요."
-    @paste.native="evt => pasteCapture(evt)"
+    placeholder="내용을 입력해주세요." 
+    @paste.native="evt => pasteCapture(evt)" 
+    @drop.native="evt => dropCapture(evt)" 
     :toolbar="[
         // ['token'],
         ['bold', 'italic', 'underline', 'strike'],
@@ -154,6 +155,10 @@ export default {
                 }
             })
 
+        const pasteCapture = (evt) => {
+            console.log('pasteCapture : copy paste 작동~ ' );
+        }
+
         return {
             editorRef,
             tokenRef,
@@ -166,7 +171,9 @@ export default {
                 edit.runCmd('insertHTML', `&nbsp;<div class="bg-slate-300 editor_token row inline items-center" contenteditable="false">&nbsp;<span>${name}</span>&nbsp;<i class="q-icon material-icons cursor-pointer" onclick="this.parentNode.parentNode.removeChild(this.parentNode)">close</i></div>&nbsp;`)
                 edit.focus()
             },
-            qEditorComputed
+            qEditorComputed,
+            pasteCapture
+
         }
     }
 }

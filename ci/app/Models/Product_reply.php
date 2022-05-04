@@ -15,7 +15,8 @@ class Product_reply extends \CodeIgniter\Model
         'parent_reply_no',
         'parent_reply_writer',
         'reply_order',
-        'reply_group'
+        'reply_group',
+        'review_grade'
     ];
     protected $primaryKey = 'reply_no';
 

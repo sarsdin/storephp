@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\Cart;
 use App\Models\Product;
 use App\Models\Product_image;
+use App\Models\Product_reply;
 use CodeIgniter\Controller;
 use CodeIgniter\Database\Exceptions\DataException;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -177,6 +178,7 @@ class Productc extends Controller
         $res = $this->response;
         $product = new Product();
         $productImg = new Product_image();
+        $productReview = new Product_reply();
 
 //        $validationRule = [
 //            'product_image' => [
@@ -213,21 +215,25 @@ class Productc extends Controller
             $product->db->transStart();     //트랜잭션 시작
             $result = $product->find($no);
             $resultImg = $productImg->where('product_no', $no)->findAll();
-            $product->db->transComplete();  //트랜잭션 완료
+            $resultReview = $productReview->where('product_no', $no)->findAll();
+            $transactionResult = $product->db->transComplete();  //트랜잭션 완료
             log_message("debug", "getProductInfo:\$result: ".print_r($result, true));
             log_message("debug", "getProductInfo:\$resultImg: ".print_r($resultImg, true));
+            log_message("debug", "getProductInfo:\$resultImg: ".print_r($resultReview, true));
 
-            if ($result == null) {
+            if ($transactionResult == false) {
 
                 return $res->setJSON([
                     'result' => $result,
-                    'msg' => $product->errors()
+                    'msg' => $product->errors(),
                 ]);
 
             } else {
                 return $res->setJSON([      //db에서 가져오기 성공시 상품정보와 해당 이미지 정보를 보냄.
                     'result' => $result,
-                    'resultImg' => $resultImg
+                    'resultImg' => $resultImg,
+                    'resultReview' => $resultReview,
+
                 ]);
             }
         } catch (\ReflectionException | DataException $e) {
@@ -552,6 +558,205 @@ class Productc extends Controller
 
 
 
+    //홈화면 헤더 상품 검색 - list 반환
+    public function headerSearch() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $product = new Product();
+        $productImg = new Product_image();
+
+        $data = $req->getVar();
+        log_message("debug", '[Productc]:headerSearch  $data  : '.print_r($data, true));
+
+        $totalItems = 0;
+
+        try {
+//            $resData = null;
+//            if ($data('productSearch') == '') {
+//                $resData = $product->findAll();
+//
+//            } else {
+//                $resData = $product->like('product_name', $data('productSearch'))->orderBy('product_name')->findAll();
+//            }
+            $namedBinding = [
+                'productSearch' => $data['productSearch'],
+                'productCategory' => $data['productCategory'],
+                'categoryParent' => $data['categoryParent'],
+                'dbStartNumber' => $data['dbStartNumber'],
+                'dbEndNumber' => $data['dbEndNumber'],
+            ];
+
+            $sql = " select * from (
+                            select @rownum:=@rownum+1 as rownum, i.* from (
+                                select * from product 
+                                where
+                                    case
+                                        when :productSearch: != '' then product_name like concat_ws(:productSearch: , '%', '%')
+                                        else 1=1
+                                    end 
+                                    
+                                    and 
+                                    
+                                    case
+                                        when :productCategory: != '' then category_code = :productCategory:
+                                        else
+                                            case
+                                                when :categoryParent: != '' 
+                                                then category_code IN (select category_code  from product_category pc where category_parent = :categoryParent:)
+                                                else 1=1
+                                            end 
+                                    end 
+                                order by product_name
+                            ) i, (select @rownum:=0) tmp ) o
+                        where o.rownum between :dbStartNumber: and :dbEndNumber:";
+
+            $sqlForCount = " select * from product 
+                                where
+                                    case
+                                        when :productSearch: != '' then product_name like concat_ws(:productSearch: , '%', '%')
+                                        else 1=1
+                                    end 
+                                    
+                                    and 
+                                    
+                                    case
+                                        when :productCategory: != '' then category_code = :productCategory:
+                                        else
+                                            case
+                                                when :categoryParent: != '' 
+                                                then category_code IN (select category_code  from product_category pc where category_parent = :categoryParent:)
+                                                else 1=1
+                                            end 
+                                    end ";
+
+//            $sql = " select * from (
+//                            select @rownum:=@rownum+1 as rownum, i.* from (
+//                                select * from product ";
+//
+//            if ($data['productSearch'] != '') {
+//                if ($data['productCategory'] != '') {
+//                    if ($data['categoryParent'] != '') {    // 검색(o), 하위카테고리(o), 상위카테고리(o)
+//                        $sql = $sql." where product_name like concat_ws(:productSearch:, '%', '%') and category_code in
+//                                (select category_code from product_category pc where category_parent = :categoryParent: ) "; //mysql 대체문법 concat_ws() 활용
+//                        $sql = $sql." order by product_name
+//                            ) i, (select @rownum:=0) tmp ) o
+//                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+//                        $totalItems = $product->where('category_code', $data['productCategory'])->
+//                        like('product_name', $data['productSearch'])->countAllResults();
+//
+//
+//                    } else {                              // 검색(o), 하위카테고리(o), 상위카테고리(x)
+//                        $sql = $sql." where product_name like concat_ws(:productSearch:, '%', '%') and category_code = :productCategory: "; //mysql 대체문법 concat_ws() 활용
+//                        $sql = $sql." order by product_name
+//                            ) i, (select @rownum:=0) tmp ) o
+//                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+//                    }
+//
+//                } else {
+//                    if ($data['categoryParent'] != '') { // 검색(o), 하위카테고리(x), 상위카테고리(o)
+//                        $sql = $sql." where  product_name like concat_ws(:productSearch:, '%', '%') and  category_code in
+//                                (select category_code from product_category pc where category_parent = :categoryParent: )  ";
+//                        $sql = $sql." order by product_name
+//                            ) i, (select @rownum:=0) tmp ) o
+//                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+//
+//                    } else {                              // 검색(o), 하위카테고리(x), 상위카테고리(x)
+//                        $sql = $sql." where product_name like concat_ws(:productSearch:, '%', '%') ";
+//                        $sql = $sql." order by product_name
+//                            ) i, (select @rownum:=0) tmp ) o
+//                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+//                    }
+//                }
+//
+//            } else {
+//                if ($data['productCategory'] != '') {
+//                    if ($data['categoryParent'] != '') {   // 검색(x), 하위카테고리(o), 상위카테고리(o)
+//                        $sql = $sql." where category_code = :productCategory: and category_code in
+//                                (select category_code from product_category pc where category_parent = :categoryParent: )  ";
+//                        $sql = $sql." order by product_name
+//                            ) i, (select @rownum:=0) tmp ) o
+//                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+//
+//                    } else {                               // 검색(x), 하위카테고리(o), 상위카테고리(x)
+//                        $sql = $sql." where category_code = :productCategory: ";
+//                        $sql = $sql." order by product_name
+//                            ) i, (select @rownum:=0) tmp ) o
+//                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+//                    }
+//                } else {
+//                    if ($data['categoryParent'] != '') {  // 검색(x), 하위카테고리(x), 상위카테고리(o)
+//                        $sql = $sql." where  category_code in
+//                                (select category_code from product_category pc where category_parent = :categoryParent: )  ";
+//                        $sql = $sql." order by product_name
+//                            ) i, (select @rownum:=0) tmp ) o
+//                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+//                    }
+//                                                          // 검색(x), 하위카테고리(x), 상위카테고리(x)
+//                }
+//            }
+
+//            $sql = $sql." order by product_name
+//                            ) i, (select @rownum:=0) tmp ) o
+//                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+
+            log_message("debug", "[Productc] headerSearch:\$sql: ".print_r($sql, true));
+
+
+            $result = [];
+            //search, category 값 유무에 따라 다른 totalItems 수를 리턴해야한다. 검색결과에 따른 다른 아이템숫자를 리턴해줘야 페이징시 올바른 페이징이 가능하다.
+//            if ($data['productSearch'] != '') {
+//                if ($data['productCategory'] != '') {
+//                    $totalItems = $product->where('category_code', $data['productCategory'])->
+//                    like('product_name', $data['productSearch'])->countAllResults();
+//
+//                } else {
+//                    $totalItems = $product->like('product_name', $data['productSearch'])->countAllResults();
+//                }
+//
+//            } else {
+//                if ($data['productCategory'] != '') {
+//                    $totalItems = $product->where('category_code', $data['productCategory'])->countAllResults();
+//
+//                } else {
+//                    $totalItems = $product->countAll();
+//                }
+//            }
+
+//                    $result = $product->db->query($sql, [$data['productSearch'], $data['productCategory'], $data['dbStartNumber'], $data['dbEndNumber']]);
+//                    $result = $product->db->query($sql, [$data['productSearch'], $data['dbStartNumber'], $data['dbEndNumber']]);
+//                    $result = $product->db->query($sql,[$data['productCategory'], $data['dbStartNumber'], $data['dbEndNumber']]);
+//                    $result = $product->db->query($sql,[$data['dbStartNumber'], $data['dbEndNumber']]);
+            //4332 위에서부터 ?개수 , 하지만, 명명된 바인딩을 사용하면 아래 한줄로 가능
+            $result = $product->db->query($sql, $namedBinding);
+
+//            log_message("debug", "[Productc] headerSearch:\$result->getResult(): ".print_r($result->getResult(), true));
+//            log_message("debug", "[Productc] headerSearch:\$result->getResultArray(): ".print_r($result->getResultArray(), true));
+            $result2 = $product->db->getLastQuery();
+            log_message("debug", "[Productc] headerSearch getLastQuery(): ".print_r($result2, true));
+
+            $resData = $result->getResultArray();
+            $totalItems = $product->db->query($sqlForCount, $namedBinding)->getNumRows();
+
+            //완료된 쿼리로부터 받은 상품리스트의 각 상품마다 순회하여 상품이미지를 추가함
+            for ($i=0; $i<count($resData); $i++) {
+                $product_image = $productImg->where('product_no', $resData[$i]['product_no'])->findColumn('stored_file_name');
+                $resData[$i]['product_image'] = $product_image;
+            }
+//            log_message("debug", '[Productc]:headerSearch $resData[$i] : '.print_r($resData, true));
+
+            //결과 반환
+            return $res->setJSON([
+                'result' => $resData,
+                'totalItems' => $totalItems,
+                'msg' => $product->errors()
+            ]);
+
+
+        } catch(\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
 
 
 

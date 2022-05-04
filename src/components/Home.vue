@@ -3,23 +3,27 @@
     <div id="mainc" class="w-260 flex flex-col my-0 mx-auto">
         <!-- 헤더 -->
         <Header></Header>
-        <!-- <router-view name="header"></router-view> -->
 
         <!-- 컨텐츠 -->
         <div class="flex-1 flex flex-col sm:flex-row">
             <main class="w-full flex flex-wrap bg-white">
                 <router-view name="home" :key="[$route.fullPath, storeInfo.rstate]" ></router-view>
-                <!-- <Notice v-if="topIcon == 'notice'"></Notice> -->
-                <!-- <Contentholder v-else-if="topIcon == 'content'" v-for="item in items" v-bind:key="item.name" v-bind:item="item"/> -->
             </main>
 
             <nav class="order-first sm:w-68 text-white">Left Sidebar</nav>
 
-            <aside class="sm:w-68 text-white">Right Sidebar</aside>
+            <aside class="sm:w-68 text-white">
+                <!-- <div class="flex justify-center relative w-full h-full">
+                    <div class="flex sticky top-20 w-20 h-96 bg-slate-100">
+                        
+                    </div>
+                </div> -->
+            </aside>
         </div>
 
         <!-- 푸터 -->
         <Footers></Footers>
+
         <div @click="toTopScroll()" id="toTopBT" class="fixed right-20 bottom-5" style="display: none;">
             <button class="px-1 w-fit h-10 border border-airbus-16 text-airbus-16 rounded">▲위로</button>
         </div>
@@ -50,18 +54,14 @@ export default {
     setup() {
         const userInfo = useLoginStore();
         const storeInfo = useStore();
-        // const topIcon = ref('content');
-        // const toTopBT = ref(false);
         const state = reactive({
             scrollTop: 0,
-            // isScrollDown: false,
             target: null
         })
 
-        // const notice = () =>{
-        //     alert("notice() clicked");
-        //     topIcon.value = "notice";
-        // }
+
+
+        //일정이상 스크롤이 내려가면 위로버튼이 나와서 스크롤을 위로 올려주는 메소드
         var timer;
         function handleScrollToTop(e) {
             if (!timer) {
@@ -72,7 +72,7 @@ export default {
                                 //기존에 지연중인 setTimeout을 clearTimeout으로 취소시켜 연속 검색을 통한 부하 방지의 목적으로 이용됨.
 
                     state.scrollTop = document.documentElement.scrollTop;
-                    // console.log('e.target.scrollTop :>> ', document.documentElement.scrollTop);
+                    // console.log('e.target.scrollTop :>> ', document.documentElement.scrollTop);  //현재 스크롤탑 위치의 값을 보여줌. 스크롤이동시마다 바뀜
                     // console.log('e.target.scrollTop2 :>> ', state.scrollTop);
                     // console.log('e.target.scrollTop22 :>> ', ev.target.scrollTop);
                         if (state.scrollTop > 400) {

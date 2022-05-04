@@ -13,6 +13,7 @@ class Userorder_detail extends \CodeIgniter\Model
         'product_price',
         'order_detail_status',
         'refund_check',
+        'is_review_created'
     ];
     protected $primaryKey = 'order_detail_no';
 }

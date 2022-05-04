@@ -1,13 +1,13 @@
 <template>
     <div class="flex relative w-full bg-airbus-3 text-white p-3 items-center rounded-b-md">
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <font-awesome-icon :icon="['fas', 'truck']" class="text-6xl text-white"></font-awesome-icon>&nbsp;&nbsp;&nbsp;
+        <font-awesome-icon :icon="['fas', 'screwdriver-wrench']" class="text-6xl text-white"></font-awesome-icon>&nbsp;&nbsp;&nbsp;
         <div class="flex flex-col">
             <div>
-                <span class="text-3xl font-extrabold antialiased">주문조회</span>
-                <span class="text-lg font-medium antialiased text-amber-300">Order Check</span>
+                <span class="text-3xl font-extrabold antialiased">주문관리</span>
+                <span class="text-lg font-medium antialiased text-amber-300">Order Admin</span>
             </div>
-            <span class="text-sm mt-1">구매하신 주문내역을 확인할 수 있습니다!</span>
+            <span class="text-sm mt-1">관리자 전용 주문관리 페이지입니다.</span>
         </div>
         <div class="flex absolute right-14 space-x-2">
             <div class="flex flex-col">

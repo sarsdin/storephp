@@ -64,13 +64,15 @@
                         </div>
                         <div class="mt-2 text-sm text-right">
                             <button v-if="item.notice_reply_writer == userInfo.info.id" @click="deleteReply(item)" class="border p-1 rounded-md text-slate-600 hover:text-white hover:font-bold hover:bg-slate-300">삭제</button>
-                            <button v-if="item.notice_reply_writer == userInfo.info.id" @click="updateReply(item)" class="border p-1 rounded-md text-slate-600 hover:text-white hover:font-bold hover:bg-slate-300">수정</button>
+                            <button v-if="(item.notice_reply_writer == userInfo.info.id) && (item.isUpdateButtonClicked == false)" @click="updateReply(item)" class="border p-1 rounded-md text-slate-600 hover:text-white hover:font-bold hover:bg-slate-300">수정</button>
+                            <button v-if="(item.notice_reply_writer == userInfo.info.id) && (item.isUpdateButtonClicked == true)" @click="updateReplyComplete(item)" class="font-semibold border p-1 rounded-md text-slate-500 hover:text-white hover:font-bold hover:bg-slate-300">수정완료</button>
                             <button v-if="item.notice_reply_writer != userInfo.info.id" @click="answerInputToggle(item)" class="border p-1 rounded-md text-slate-600 hover:text-white hover:font-bold hover:bg-slate-300">답글</button>
                         </div>
                         
                     </div>
                     <div class="w-full">
                         <textarea v-if="item.visibleState" :value="item.notice_reply_content" :readonly="item.notice_reply_writer != userInfo.info.id"
+                        @change="item.notice_reply_content = $event.target.value"
                         name="reply" rows="3" class="w-full p-3 border rounded-md resize-none" placeholder=" 댓글을 입력해주세요." ></textarea>
                         <div v-else v-html="item.notice_reply_content"
                         name="reply" rows="3" class="w-full min-h-[100px] p-3 border text-gray-600 bg-gray-50 rounded-md resize-none" >
@@ -78,7 +80,7 @@
                     </div>
                 </div>
 
-                <!-- 대댓글 입력창 - 조건에 따라 나타나게끔. -->
+                <!-- 대댓글(답글) 입력창 - 조건에 따라 나타나게끔. 답글버튼을 클릭하면 그 답글에 해당하는 댓글의 번호가 answerInputToggle메소드에 의해 업데이트됨 -->
                 <div v-if="item.notice_reply_no == noticeStore.currentAnswerInputItemNumber" class="flex space-x-4 min-h-[30px] mb-2 ml-11">
                     <div>
                         <font-awesome-icon :icon="['fab', 'github-square']" class="text-5xl text-blue-700" />
@@ -268,6 +270,7 @@ export default {
                 noticeStore.replyL = res.data;
                 noticeStore.replyL.forEach((item,i,origin) => {
                     origin[i].visibleState = false;             //현재 그냥 보이는 div 상태인지, 수정하는 textarea상태인지에 대한 여부
+                    origin[i].isUpdateButtonClicked = false;    //각 댓글의 수정버튼을 클릭하면 textarea가 활성되는데, 수정버튼도 숨기고 수정완료버튼을 나타낼지 여부
                     // origin[i].isAnswerInput = false;
                     origin[i].notice_reply_content = origin[i].notice_reply_content.replace(/(\n|\r\n)/g, '<br>'); //textarea 줄바꿈처리 정규식
 
@@ -280,6 +283,11 @@ export default {
 
         //댓글 쓰기 클릭시
         const createReply = (item) => {
+            if (userInfo.lstate == 'not') {
+                alert('댓글을 쓰기위해 로그인해주세요.');
+                noticeStore.reply.notice_reply_content = '';
+                return;
+            }
             let postData = {
                     notice_no : route.query.notice_no,
                     notice_reply_content: noticeStore.reply.notice_reply_content,
@@ -289,15 +297,16 @@ export default {
                 proxy.$log('[NoticeContent] noticeCreateReply res: ', res.data);
                 if (res.data == true) {
                     noticeStore.reply.notice_reply_content = '';
+                    noticeReplyLoad();          //쓰고 리플갱신위해 재로드
                 }
                 
             }).catch(error=>proxy.$log('[NoticeContent] noticeCreateReply error: ', error.response.data))
         }
 
-        //답글 버튼 토글 메소드
+        //답글버튼 입력창 토글 메소드 - currentAnswerInputItemNumber와 클릭한 item(댓글)의 번호가 같으면(같은버튼 재클릭시) 숨기고, 다르면(다른댓글클릭시) 열림
         const answerInputToggle = (item) => {
             if (noticeStore.currentAnswerInputItemNumber == item.notice_reply_no) {
-                noticeStore.currentAnswerInputItemNumber = -1;
+                noticeStore.currentAnswerInputItemNumber = -1;      //-1은 같은 댓글번호가 없을 것이기에 조건을 false로 만들기 위해 사용!
                 
             } else {
                 noticeStore.currentAnswerInputItemNumber = item.notice_reply_no;
@@ -316,6 +325,11 @@ export default {
 
         //답글달기 클릭시
         const createReplyAnswer = (item) => {
+            if (userInfo.lstate == 'not') {
+                alert('댓글을 쓰기위해 로그인해주세요.');
+                noticeStore.reply.notice_reply_content = '';
+                return;
+            }
             let postData = {
                     notice_no : route.query.notice_no,
                     notice_reply_content: noticeStore.reply.notice_reply_content,
@@ -323,7 +337,7 @@ export default {
                     reply_group : item.reply_group,
                     parent_reply_no : item.notice_reply_no,
                     parent_reply_writer : item.notice_reply_writer,
-                }
+            }
             http.post('/home/noticeCreateReplyAnswer', postData).then((res) => {
                 proxy.$log('[NoticeContent] createReplyAnswer res: ', res.data);
                 if (res.data == true) {
@@ -336,31 +350,87 @@ export default {
             }).catch(error=>proxy.$log('[NoticeContent] createReplyAnswer error: ', error.response.data))
         }
 
-        //실험 - 답글정보 로딩 v-for에서 메소드로..
-        const noticeAnswerItemsLoad = async (item) => {
-            await http.get('/home/noticeAnswerItemsLoad', {
-                params:{ 
-                    'notice_no': route.query.notice_no,
-                    'reply_group': item.reply_group,
-                    'parent_reply_no': item.notice_reply_no,
-                }
-            }).then((res) => {
-                proxy.$log('[NoticeContent] noticeAnswerItemsLoad res: ', res.data);
-                item.answerData = res.data;
-                return item.answerData;
+        //실험 - 답글정보 로딩 v-for에서 메소드로..  되긴하는듯하지만 안쓰는 걸로! side effect우려큼
+        // const noticeAnswerItemsLoad = async (item) => {
+        //     await http.get('/home/noticeAnswerItemsLoad', {
+        //         params:{ 
+        //             'notice_no': route.query.notice_no,
+        //             'reply_group': item.reply_group,
+        //             'parent_reply_no': item.notice_reply_no,
+        //         }
+        //     }).then((res) => {
+        //         proxy.$log('[NoticeContent] noticeAnswerItemsLoad res: ', res.data);
+        //         item.answerData = res.data;
+        //         return item.answerData;
                 
-            }).catch(error=>proxy.$log('[NoticeContent] noticeAnswerItemsLoad error: ', error.response.data))
-        }
+        //     }).catch(error=>proxy.$log('[NoticeContent] noticeAnswerItemsLoad error: ', error.response.data))
+        // }
 
 
         //댓글 수정
         const updateReply = (item) => {
-            
+            if (userInfo.lstate == 'not') {
+                alert('댓글을 쓰기위해 로그인해주세요.');
+                noticeStore.reply.notice_reply_content = '';
+                return;
+            }
+            item.visibleState = true;          //내용div를 감추고 수정textarea가 나타나게 visible 상태를 true로 변경해준다
+            item.isUpdateButtonClicked = true; //수정버튼 클릭시 수정완료버튼 나타내기위함
+            item.notice_reply_content = item.notice_reply_content.replace(/(\<br\>)/g, '\n')
+
+        }
+
+        //댓글수정완료 버튼 클릭시
+        const updateReplyComplete = (item) => {
+            if (userInfo.lstate == 'not') {
+                alert('댓글을 쓰기위해 로그인해주세요.');
+                // noticeStore.reply.notice_reply_content = '';
+                return;
+            }
+            item.visibleState = false;          //textarea (x) div(o)
+            item.isUpdateButtonClicked = false; //완료버튼 클릭시 수정버튼 나타내기위함
+
+            let postData = {
+                    notice_no : route.query.notice_no,
+                    notice_reply_content: item.notice_reply_content,
+                    notice_reply_writer: userInfo.info.id,
+                    reply_group : item.reply_group,
+                    notice_reply_no : item.notice_reply_no,
+            }
+            http.post('/home/noticeUpdateReplyComplete', postData).then((res) => {
+                proxy.$log('[NoticeContent] updateReplyComplete res: ', res.data);
+                if (res.data.result == true) {
+                    // noticeStore.reply.notice_reply_content = ''; //textarea 에 쓴 글들은 작업이 끝나면 초기화 되어야함.
+                    noticeReplyLoad();
+                }
+                
+            }).catch(error=>proxy.$log('[NoticeContent] updateReplyComplete error: ', error.response.data))
         }
 
         //댓글 삭제
         const deleteReply = (item) => {
-            
+            if (userInfo.lstate == 'not') {
+                alert(' 로그인해주세요.');
+                noticeStore.reply.notice_reply_content = '';
+                return;
+            }
+            let promptRes = window.confirm('댓글을 삭제하시겠습니까?');
+            if (promptRes) {
+                let postData = {
+                        notice_no : route.query.notice_no,
+                        notice_reply_content: item.notice_reply_content,
+                        notice_reply_writer: userInfo.info.id,
+                        reply_group : item.reply_group,
+                        notice_reply_no : item.notice_reply_no,
+                }
+                http.post('/home/noticeDeleteReply', postData).then((res) => {
+                    proxy.$log('[NoticeContent] deleteReply res: ', res.data);
+                    if (res.data.result == true) {
+                        noticeReplyLoad();
+                    }
+                    
+                }).catch(error=>proxy.$log('[NoticeContent] deleteReply error: ', error.response.data))
+            }
         }
 
 
@@ -368,7 +438,8 @@ export default {
         return {
             noticeT, isOwner, noticeStore, userInfo,// ...toRefs(answerVar),
             updateClicked, deleteClicked,
-            createReply, updateReply, deleteReply, createReplyAnswer, answerInputToggle, noticeAnswerItemsLoad
+            createReply, updateReply, deleteReply, createReplyAnswer, answerInputToggle, //noticeAnswerItemsLoad
+            updateReplyComplete,
         }
 
        

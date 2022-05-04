@@ -11,6 +11,11 @@
             <ProductModalContent v-if="modalState == 'add' " @modalOff="openState = false"></ProductModalContent>
             <ProductModalUpdate v-if="modalState == 'update' " :productNo="passNoForUpdate" @modalOff="openState = false"></ProductModalUpdate>
         </ProductModal>
+        
+        <!-- <div>
+            <button></button>
+        </div> -->
+
     </div>
     
     <div class="overflow-x-auto shadow-md sm:rounded-md mt-10">
@@ -149,7 +154,7 @@ export default {
             state.addProduct.forEach((item,i,origin) => {
                 origin[i].isDeleteChecked = false;
             })
-        });
+        }).catch(error => console.log('[addProdcut] 상품목록로딩 error: ', error.response.data))
 
         //검색버튼 엔터시
         const searchWord = () => {
@@ -161,13 +166,15 @@ export default {
                     noticeSearchType: searchType.value
                 }
             }).then(res => {
-                console.log("searchRes :>> ", res.data);
+                console.log("[addProdcut] searchWord Res: ", res.data);
                 state.addProduct = res.data;
-            });
+
+            }).catch(error => console.log('[addProdcut] searchWord error: ', error.response.data))
         };
 
         //줄 클릭시
         const rowClicked = (item, e) => {
+            window.scrollTo({top:0})
             if (e.target.getAttribute('type') == 'checkbox') {
                 e.stopPropagation();
                 return;
@@ -197,14 +204,15 @@ export default {
                     item.product_price = Number(res.data.resData.product_price.replaceAll(',','')).toLocaleString('ko-KR');//숫자데이터 자릿수 넣기용.
                     item.product_stock = res.data.resData.product_stock;
                     item.product_spec = res.data.resData.product_spec;
-                    proxy.$log('AddProduct modifyClicked res: ', res.data);
+                    proxy.$log('[AddProduct] modifyClicked res: ', res.data);
                 } else {
                     alert('수정 실패. 재시도해주세요.')
-                    proxy.$log('AddProduct modifyClicked res: ', res.data);
+                    proxy.$log('[AddProduct] modifyClicked res: ', res.data);
                 }
+
             }).catch((error) => {
                 alert('통신-서버 오류. 재시도해주세요.')
-                proxy.$log('AddProduct::modifyClicked: ', error.response.data);
+                proxy.$log('[AddProduct] modifyClicked error: ', error.response.data);
             })
         }
 

@@ -209,7 +209,11 @@ export default {
             let result = res.data.result.filter((item,i,origin) => {
                 return item.basic_address == 1;     //1(true)은 db에 기본배송지로 지정되어 있다는 말.
             })[0];                                  //받아온 배열의 0번째 인덱스 == 기본배송지
-
+            
+            if (result == undefined) {              //받아온 주소지목록에 기본배송지로 설정이 안되있으면 제일처음 주소를 넣어서 받는사람정보를 초기화해준다.
+                result = res.data.result[0];
+            }
+            console.log('[Payment] getAddressList res result: ', result);
             선택클릭(result);   //기본배송지로 지정된 객체로 배송지 초기화.
 
         }).catch(error => proxy.$log('[Payment] getAddressList error: ', error.response.data))
@@ -254,7 +258,8 @@ export default {
                 receipt_id: '',
                 purchased_at: null,
                 method: '',
-                product_name: '',
+                product_name: computedItemsInfo[0].product_name,
+                product_image: computedItemsInfo[0].product_image[0],
                 card_name: '',
                 computedItemInfo: computedItemsInfo
             
@@ -291,7 +296,7 @@ export default {
                     addr:  state.receiverInfo.user_address1 + state.receiverInfo.user_address2,      //'사용자 주소',
                     phone: state.receiverInfo.user_phone,      //'010-1234-4567'
                 },
-                order_id: '고유order_id_1234', //고유 주문번호로, 생성하신 값을 보내주셔야 합니다. //백앤드에서 주문레코드생성후 받아와야할듯?
+                order_id: order_no, //고유 주문번호로, 생성하신 값을 보내주셔야 합니다. //백앤드에서 주문레코드생성후 받아와야할듯?
                 params: {callback1: '그대로 콜백받을 변수 1', callback2: '그대로 콜백받을 변수 2', customvar1234: '변수명도 마음대로'},
                 account_expire_at: '2020-10-25', // 가상계좌 입금기간 제한 ( yyyy-mm-dd 포멧으로 입력해주세요. 가상계좌만 적용됩니다. )
                 extra: {
@@ -309,6 +314,16 @@ export default {
             }).cancel(function (data) {
                 //결제가 취소되면 수행됩니다.
                 console.log(data);
+                http.get('/paymentc/cancelPaymentInProcessing', {
+                    params:{ order_no: order_no }
+                }).then((res) => {
+                    if (res.data.result == true) {
+                        proxy.$log('결제하기중 취소완료', res.data.result);
+                    } else {
+                        proxy.$log('결제하기중 취소실패', res.data.result);
+                    }
+                }).catch(error=>proxy.$log('결제하기중 취소 error: ', error.response.data));
+
             }).ready(function (data) {
                 // 가상계좌 입금 계좌번호가 발급되면 호출되는 함수입니다.
                 console.log(data);
@@ -334,9 +349,32 @@ export default {
             }).done(function (data) {
                 //결제가 정상적으로 완료되면 수행됩니다
                 //비즈니스 로직을 수행하기 전에 결제 유효성 검증을 하시길 추천합니다.
-                console.log(data);
+                console.log('결제하기클릭 done: ',data);
                 store.rstate++;
-                router.push({name: 'paymentComplete'});
+                let res = {
+                    computedItemsInfo: computedItemsInfo,  //결제에 사용했던 데이터(상품정보 등)
+                    doneInfo: data                         //결제가 완료되고 부트페이에서 내려받은 결제완료정보
+                }
+
+                //서버에 결제완료 정보 송출하여 db에 주문정보 업데이트 및 주문상품상세정보에 해당 상품정보들 추가.
+                http.post('/paymentc/orderCompleted', {
+                    order_no: data.order_id,
+                    receipt_id: data.receipt_id,
+                    purchased_at: data.purchased_at,
+                    method: data.method,
+                    product_name: data.item_name,
+                    product_price: data.price,
+                    order_state: '결제완료',
+                    card_name: data.card_name,
+                    card_no: data.card_no,
+                    computedItemInfo: computedItemsInfo    
+
+                }).then((res) => {
+                    console.log('결제하기클릭 done: ', res.data);
+                    router.push({name: 'paymentComplete', params: res });
+
+                }).catch(error => console.log('결제하기클릭 done error: ', error.response.data))
+
             });
         }
     

@@ -47,6 +47,10 @@ import 'quasar/src/css/index.sass'
 //     props: ['todo'],
 //     template: '<li>{{ todo.text }}</li>'
 // })
+
+//개발 p env 환경을 dev , production 환경으로 구분해서 환경 변수에 따라 자동으로 전환되는 로직이 필요하다. 
+//왜? 개발서버의 proxy를 사용하여 Cors 오류를 피하기 위한 것이며, 빌드시(production)에 자동으로 환경변수에 따라 axios의 baseURL이 적용되게 해야한다.
+
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 

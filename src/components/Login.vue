@@ -97,14 +97,18 @@ export default {
 
         //로그인 처리
         const login = ()=>{
-            http.defaults.withCredentials = true;
-            http.get('/home/login',{
-                params:{
+            // http.defaults.withCredentials = true;
+            http.post('/home/login', {
                     user_id:userid.value,
                     user_pwd:passwd.value,
                     isAutoLogin: isAutoLogin.value
-                },
-                withCredentials: true,
+                }, {
+                // params:{
+                //     user_id:userid.value,
+                //     user_pwd:passwd.value,
+                //     isAutoLogin: isAutoLogin.value
+                // },
+                // withCredentials: true,
                 headers: { 
                     'content-Type': 'application/json',
                     "Accept": "/",
@@ -116,33 +120,32 @@ export default {
             //     // headers: { "Content-Type": "application/json; charset=UTF-8"},
             //     withCredentials: true
             // }
-            ).then(response =>{
-                const res =  response.data;
-                console.log("[Login] res.data: ", res);
+            ).then(res =>{
+                // const res =  response.data;
+                console.log("[Login] res.data: ", res.data);
 
-                if (res.result != false) {
-                    alert(res.msg);
+                if (res.data.result != false) {
+                    alert(res.data.msg);
                     userInfo.setLstate('logined');  //전역 로그인모듈 객체의 상태를 변경
-                    userInfo.setInfo(res.sessionInfo.user_id); //마찬가지로 전역 객체에 유저id정보를 갱신
-                    userInfo.info.user = res.result; //회원정보를 store에 저장!
-                    userInfo.info.session_id = res.sessionInfo.session_id; //세션id를 store에 저장
+                    userInfo.setInfo(res.data.sessionInfo.user_id); //마찬가지로 전역 객체에 유저id정보를 갱신
+                    userInfo.info.user = res.data.result; //회원정보를 store에 저장!
+                    userInfo.info.session_id = res.data.sessionInfo.session_id; //세션id를 store에 저장
                     store.cartStateMutation();      //store 장바구니 상태 갱신
                     
                     //자동로그인일경우 로컬스토리지에 저장
-                    if (res.sessionInfo.isAutoLogin == true) {
-                        window.localStorage.setItem('isAutoLogin', true);
-                        window.localStorage.setItem('session_id', res.sessionInfo.session_id);
-                    } else {
-                        window.localStorage.removeItem('isAutoLogin');
-                        window.localStorage.removeItem('session_id');
-                        // window.localStorage.clear();
-                    }
-
+                    // if (res.sessionInfo.isAutoLogin == true) {
+                    //     window.localStorage.setItem('isAutoLogin', true);
+                    //     window.localStorage.setItem('session_id', res.sessionInfo.session_id);
+                    // } else {
+                    //     window.localStorage.removeItem('isAutoLogin');
+                    //     window.localStorage.removeItem('session_id');
+                    //     // window.localStorage.clear();
+                    // }
 
                     router.push('/');
 
-                } else if(res.error != undefined) { //error 속성이 존재하면 서버쪽에서 로그인이 실패한거라서 관련 실패메시지가 도착한다.
-                    alert(res.msg);  
+                } else if(res.data.error != undefined) { //error 속성이 존재하면 서버쪽에서 로그인이 실패한거라서 관련 실패메시지가 도착한다.
+                    alert(res.data.msg);  
                 }
 
             }).catch(error =>{

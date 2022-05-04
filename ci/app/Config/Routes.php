@@ -21,7 +21,7 @@ $routes->setDefaultController('Home');
 $routes->setDefaultMethod('index');
 $routes->setTranslateURIDashes(false);
 $routes->set404Override(function (){
-    echo view('../../public/dist/index.html');
+    echo view('../../public/dist/index.html');      //front의 404시 리다이렉트 페이지를 지정해준다.
 });
 $routes->setAutoRoute(true);
 

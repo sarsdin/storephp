@@ -226,7 +226,7 @@ export default {
                 const tmp = [];
                 if(ifile.value[0] != null) {//input tag에서 받아온 사진파일(배열)의 첫번재를 검사하여 데이터가 있다면 파일을 url로 변환하여 뷰에 연결.
                     console.log("ifile not null: ", ifile.value);
-                    // ifile.value.forEach(element => {  //forEach가 function이 아니라고 에러남
+                    // ifile.value.forEach(element => {  //forEach가 function이 아니라고 에러남 -- 5/1추가: element가 아니라 (item)으로 매개변수를 받아야지..과거의 나
                     //     tmp.push(URL.createObjectURL(element))
                     // });
                     for (let i = 0; i < ifile.value.length; i++) {  //받은 사진배열의 길이만큼 뷰에 들어갈 url을 생성하여 new배열에 넣음.

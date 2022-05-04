@@ -7,7 +7,7 @@
             <slot/>
 
             <!-- 배송지 선택 부분 -->
-            <div v-if="배송지선택" >
+            <div v-if="배송지모달제어 == '배송지선택'" >
                 <h5 class="text-center font-semibold text-zinc-600">배송지 선택</h5><br><hr>
                 <div v-for="item in info" :key="item.user_id" class="my-4 p-2 bg-white space-y-2 border-2">
                     <div class="flex items-center text-lg font-semibold space-x-4">
@@ -30,7 +30,7 @@
             </div>
 
             <!-- 배송지 추가 부분 -->
-            <div v-if="배송지추가">
+            <div v-if="배송지모달제어 == '배송지추가'">
                 <h5 class="text-center font-semibold text-zinc-600">배송지 추가</h5><br><hr>
                 <div class="my-4 bg-white space-y-2">
                     <div class="flex items-center text-lg space-x-4">
@@ -55,16 +55,51 @@
                     </div>
                 </div>
 
-                <button @click="저장클릭()" class="w-full text-blue-500 font-bold text-lg border-2 p-2 my-2 rounded">저장</button>
+                <button @click="저장클릭()" class="w-full text-blue-500 font-bold text-lg border-2 p-2 my-2 rounded hover:text-white hover:bg-blue-500">저장</button>
             </div>
-
+            
+            
             <!-- 배송지 수정 부분 -->
-            <div v-if="배송지수정">
+            <div v-if="배송지모달제어 == '배송지수정'">
                 <h5 class="text-center font-semibold text-zinc-600">배송지 수정</h5><br><hr>
                 <div class="my-4 bg-white space-y-2">
                     <div class="flex items-center text-lg space-x-4">
                         <font-awesome-icon :icon="['far', 'user']" class="text-gray-400"></font-awesome-icon>
-                        <input type="text" name="receiver" placeholder="받는사람" >
+                        <input @change="tmpName = $event.target.value" :value="tmpName" type="text" name="receiver" placeholder="받는사람" >
+                    </div>
+                    <div class="flex items-center text-lg space-x-4">
+                        <font-awesome-icon :icon="['fas', 'map-location-dot']" class="text-gray-400"></font-awesome-icon>
+                        <input @click="daumPost" v-model="tmpAddressC" type="text" name="post" placeholder="우편번호 찾기" class="w-full" >
+                    </div>
+                    
+                    <div id="ss" ref="embed" class="w-full flex justify-center bg-[#ECECEC]">
+                    </div>
+
+                    <div class="flex items-center text-lg space-x-4">
+                        <font-awesome-icon :icon="['fas', 'map-location-dot']" class="text-gray-400"></font-awesome-icon>
+                        <input @change="tmpAddress.address2 = $event.target.value" :value="tmpAddress.address2" type="text" name="post" placeholder="상세주소" class="w-full" >
+                    </div>
+                    <div class="flex items-center text-lg space-x-4">
+                        <font-awesome-icon :icon="['fas', 'phone']" class="text-gray-400"></font-awesome-icon>
+                        <input v-model="tmpPhone" type="text" name="phone" placeholder="휴대폰 번호" >
+                    </div>
+                </div>
+            
+                <div class="">
+                    기본 배송지로 설정
+                    <input v-model="tmp_basic_address" class="w-3 h-3" type="checkbox" name="basic" id="basic">
+                </div>
+
+                <button @click="수정완료()" class="w-full text-blue-500 font-bold text-lg border-2 p-2 my-2 rounded hover:text-white hover:bg-blue-500">수정</button>
+                <button @click="배송지삭제클릭()" class="w-full text-blue-500 font-bold text-lg border-2 p-2 my-2 rounded hover:text-white hover:bg-blue-500">삭제</button>
+            </div>
+
+            <!-- <div v-if="배송지모달제어 == '배송지수정'">
+                <h5 class="text-center font-semibold text-zinc-600">배송지 수정</h5><br><hr>
+                <div class="my-4 bg-white space-y-2">
+                    <div class="flex items-center text-lg space-x-4">
+                        <font-awesome-icon :icon="['far', 'user']" class="text-gray-400"></font-awesome-icon>
+                        <input v-model="배송지수정정보" type="text" name="receiver" placeholder="받는사람" >
                     </div>
                     <div class="flex items-center text-lg space-x-4">
                         <font-awesome-icon :icon="['fas', 'map-location-dot']" class="text-gray-400"></font-awesome-icon>
@@ -75,18 +110,20 @@
                         <input type="text" name="phone" placeholder="휴대폰 번호" >
                     </div>
                 </div>
-                <button @click="저장클릭()" class="w-full text-blue-500 font-bold text-lg border-2 p-2 my-2 rounded">저장</button>
-            </div>
+                <button @click="수정완료()" class="w-full text-blue-500 font-bold text-lg border-2 p-2 my-2 rounded hover:text-white hover:bg-blue-500">수정</button>
+            </div> -->
 
             
 
             <!-- 취소버튼 -->
-            <div class="relative mx-auto max-w-screen-xl">
+            <div class="relative mx-auto max-w-screen-xl space-x-2">
                 <!-- <button class="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition duration-150 ease-in-out hover:bg-indigo-600 bg-indigo-700 rounded text-white px-8 py-2 text-sm">
                     제출
                 </button> -->
                 <button class="focus:outline-none focus:ring-2 focus:ring-offset-2  focus:ring-gray-400 bg-gray-100 transition duration-150 text-gray-600 ease-in-out hover:border-gray-400 hover:bg-gray-300 border rounded px-8 py-2 text-sm" 
                     @click="cancelClicked()">취소</button>
+                <button v-if="배송지모달제어 == '배송지수정' || 배송지모달제어 == '배송지추가'" class="focus:outline-none focus:ring-2 focus:ring-offset-2  focus:ring-gray-400 bg-gray-100 transition duration-150 text-gray-600 ease-in-out hover:border-gray-400 hover:bg-gray-300 border rounded px-8 py-2 text-sm" 
+                    @click="배송지초기화면()">뒤로</button>
             </div>
             <!-- X버튼 -->
             <button class="absolute top-0 right-0 mt-4 mr-5 text-gray-400 hover:text-gray-600 transition duration-150 ease-in-out rounded focus:ring-2 focus:outline-none focus:ring-gray-600" 
@@ -132,14 +169,18 @@ export default {
         const embed = ref(null);        //도로명,지번 API 를 나오게 할 div 태그를 설정.`
 
         const state = reactive({
-            배송지선택: true,            //여기 3가지 변수는 모달 화면제어를 위한 변수
-            배송지추가: false,
-            배송지수정: false,
+            배송지모달제어: '배송지선택',  // 모달 화면제어를 위한 변수
+            // 배송지수정정보 : {            // 배송지수정화면을 위한 임시저장 변수. 수정모달에 데이터를 v-model로 바인딩후 수정클릭시 각 item정보를 이곳으로 넣어서 데이터조작을 해준다.
+            //     user_id: '',
+            //     user_name: tmpValue.tmpName,
+            //     user_address1: String(tmpAddressC.value).toString(),
+            //     user_address2: tmpValue.tmpAddress.address2,
+            //     user_phone: '',
+            // },             
             info: [],                   //Address List를 담는 변수
-
         })
         
-        //배송지추가 임시 저장변수
+        //배송지추가 임시 저장변수. 도로명api에서 받아온 정보가 저장됨
         const tmpValue = reactive({
             tmpName: '',
             tmpAddress: {
@@ -148,13 +189,23 @@ export default {
                 address2: "",
                 extraAddress: "",
             },
-            tmpPhone: ''
+            tmpPhone: '',
+            
+            //밑의 변수는 배송지수정모달창에서 db 업데이트 용도로 사용하는 변수들
+            tmp_id: '',
+            tmp_address_no: 0,
+            tmp_basic_address: false,  //수정모달에서 기본배송지로 설정할지말지. 0이면 false, 1이면 true
         })
-        const tmpAddressC = computed(() => {
-            if (tmpValue.tmpAddress.postcode == '') {
-                return '';
-            } else {
-                return tmpValue.tmpAddress.postcode+" " + tmpValue.tmpAddress.address +" "+ tmpValue.tmpAddress.extraAddress;
+        const tmpAddressC = computed( {  //db저장을 위해 도로명api에서 받아온 주소정보를 한문자열로 자동으로 합쳐서 리턴. 없으면 ''로
+            get: () => {
+                if (tmpValue.tmpAddress.postcode == '') {
+                    return '';
+                } else {
+                    return tmpValue.tmpAddress.postcode+" " + tmpValue.tmpAddress.address +" "+ tmpValue.tmpAddress.extraAddress;
+                }
+            },
+            set: (v) => {
+                tmpValue.tmpAddress.postcode = v;
             }
         })
 
@@ -166,7 +217,7 @@ export default {
                 }
             }).then((res) => {
                 proxy.$log('[AddressModal] getAddressList res: ', res.data);
-                state.info = res.data.result;
+                state.info = res.data.result;  //Address List를 담는 변수(배열)에 받아온 주소지목록을 넣어준다.
     
             }).catch(error => proxy.$log('[AddressModal] getAddressList error: ', error.response.data))
         }
@@ -175,9 +226,7 @@ export default {
         //취소 클릭시
         const cancelClicked = () => {
             // modal.value = false;
-            state.배송지선택 = true;
-            state.배송지추가 = false;
-            state.배송지수정 = false;
+            state.배송지모달제어 = '배송지선택';
             임시주소데이터초기화();
             context.emit("update:isOpened", false);
         };
@@ -188,18 +237,15 @@ export default {
             tmpValue.tmpAddress.address = "";
             tmpValue.tmpAddress.address2 = "";
             tmpValue.tmpAddress.extraAddress = "";
+            tmpValue.tmp_basic_address = false;
         }
 
         const 배송지추가클릭 = () => {
-            state.배송지선택 = false;
-            state.배송지추가 = true;
-            state.배송지수정 = false;
+            state.배송지모달제어 = '배송지추가';
             window.scrollTo({ top: 260, behavior: 'smooth'}); //글 클릭시 맨위로 가기 참고 - messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
         }
         const 배송지초기화면 = () => {
-            state.배송지선택 = true;
-            state.배송지추가 = false;
-            state.배송지수정 = false;
+            state.배송지모달제어 = '배송지선택';
         }
 
       
@@ -212,7 +258,7 @@ export default {
                 user_address2: tmpValue.tmpAddress.address2,
                 user_phone: tmpValue.tmpPhone,
             }
-            state.info.push(tmpInfo);
+            state.info.push(tmpInfo);   //현재 목록에 미리 추가시켜줌
 
             http.post('/paymentc/addAddress', tmpInfo).then((res) => {
                 proxy.$log('[AddressModal] 저장클릭 res: ', res.data);
@@ -285,14 +331,68 @@ export default {
 
         //배송지 수정 클릭시
         const 수정클릭 = (item) => {
+            state.배송지모달제어 = '배송지수정';
+            // state.배송지수정정보 = item;        //받아온 주소지요소를 수정정보모달창에 바인딩시켜준다.
+            tmpValue.tmpName = item.user_name;
+            tmpAddressC.value = item.user_address1;
+            tmpValue.tmpAddress.address2 = item.user_address2;
+            tmpValue.tmpPhone = item.user_phone;
+            tmpValue.tmp_basic_address = item.basic_address==0? false:true;
+            tmpValue.tmp_id = item.user_id
+            tmpValue.tmp_address_no = item.address_no;
             
+        }
+        //배송지 수정 클릭시
+        const 수정완료 = () => {
+            state.배송지모달제어 = '배송지선택';
+             let tmpInfo = {
+                address_no: tmpValue.tmp_address_no,
+                user_id: tmpValue.tmp_id,
+                user_name: tmpValue.tmpName,
+                user_address1: String(tmpAddressC.value).toString(),
+                user_address2: tmpValue.tmpAddress.address2,
+                user_phone: tmpValue.tmpPhone,
+                basic_address: tmpValue.tmp_basic_address
+            }
+            // state.info.push(tmpInfo);   //현재 목록에 미리 추가시켜줌(안해도 갱신되면 알아서 db에서 받아와서 갱신될듯)
+
+            http.post('/paymentc/updateAddress', tmpInfo).then((res) => {
+                proxy.$log('[AddressModal] 수정완료 res: ', res.data);
+                loadAddress();
+            }).catch((error) => {
+                proxy.$log('[AddressModal] 수정완료 error: ', error.response.data);
+            })
+
+            배송지초기화면();
+            임시주소데이터초기화();
+            context.emit('선택클릭', tmpInfo); //상위 컴포넌트인 Payment.vue 로 이벤트와 배송지정보 전송
+            window.scrollTo({ top: 260, behavior: 'smooth'});
+        }
+
+        const 배송지삭제클릭 = () => {
+             let tmpInfo = {
+                address_no: tmpValue.tmp_address_no,
+            }
+            // state.info.push(tmpInfo);   //현재 목록에 미리 추가시켜줌(안해도 갱신되면 알아서 db에서 받아와서 갱신될듯)
+
+            http.post('/paymentc/deleteAddress', tmpInfo).then((res) => {
+                proxy.$log('[AddressModal] 삭제완료 res: ', res.data);
+                loadAddress();
+            }).catch((error) => {
+                proxy.$log('[AddressModal] 삭제완료 error: ', error.response.data);
+            })
+
+            배송지초기화면();
+            임시주소데이터초기화();
+            // context.emit('선택클릭', tmpInfo); //상위 컴포넌트인 Payment.vue 로 이벤트와 배송지정보 전송
+            window.scrollTo({ top: 260, behavior: 'smooth'});
         }
 
        
         return {
             // modal, 
             ...toRefs(state), ...toRefs(tmpValue), propsModalC, embed, tmpAddressC,
-            cancelClicked, 배송지추가클릭, 저장클릭, daumPost, 선택클릭, 수정클릭
+            cancelClicked, 배송지추가클릭, 저장클릭, daumPost, 선택클릭, 수정클릭, 수정완료, 배송지초기화면, 배송지삭제클릭
             
         };
     },
