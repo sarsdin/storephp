@@ -120,38 +120,47 @@ class Home extends BaseController
         $data = $req->getVar();
         log_message("debug", "[Home] autoLogin \$data ".print_r($data, true));
 
-        if ($session->has($data['session_id'])) {
-            $userId = $session->get($data['session_id'])['user_id'];
-            $isUser = $users->find($userId);
+        $user = $users->find($data['user_id']);
 
-            if ($isUser != null ) {
-                $resData = [
-                    'result' => $isUser,
-                    'msg' => $isUser['user_id'].'님 환영합니다.'
-                ];
+        $session->set('sessionInfo', [
+            'user_id' => $user['user_id'],
+            'user_email' => $user['user_email'],
+            'logged_in' => true,
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'session_id' => session_id(),
+        ]);
 
-                //세션 정보 응답할 데이터 배열에 추가
-                $resData['sessionInfo'] = $session->get($data['session_id']);
-                return $res->setJSON($resData);
+        if ($user != null ) {
+            $resData = [
+                'result' => $user,
+                'msg' => $user['user_id'].'님 환영합니다.'
+            ];
 
-            } else {
-                $resData = [
-                    'result' => false,
-                    'error' => $userId,
-                    'msg' => '해당 아이디는 존재하지 않습니다.'
-                ];
-                return $res->setJSON($resData);
-            }
-
+            //세션 정보 응답할 데이터 배열에 추가
+            $resData['sessionInfo'] = $session->get('sessionInfo');
+            return $res->setJSON($resData);
 
         } else {
-            //세션이 설정한 자동로그인 기간이 5분이 지나 만료되었을때
             $resData = [
                 'result' => false,
-                'msg' => '해당 세션정보는 존재하지 않습니다. 자동로그인을 수행할 수 없습니다. 로그인을 해주세요.'
+                'error' => $data['user_id'],
+                'msg' => '해당 아이디는 존재하지 않습니다.'
             ];
             return $res->setJSON($resData);
         }
+
+
+
+//        if ($session->has($data['user_id'])) {
+//
+//        } else {
+//            //세션이 설정한 자동로그인 기간이 5분이 지나 만료되었을때
+//            $resData = [
+//                'result' => false,
+//                'msg' => '해당 세션정보는 존재하지 않습니다. 자동로그인을 수행할 수 없습니다. 로그인을 해주세요.'
+//            ];
+//            return $res->setJSON($resData);
+//        }
 
 
     }
@@ -168,6 +177,9 @@ class Home extends BaseController
         $users = new Users();
         $req = $this->request;
         $res = $this->response;
+        //암호화가 필요할때 사용
+        $testEncript  = 'styner14@naver.com';
+        $testE_res = $this->encrypter->encrypt($testEncript);  //decrypt
 
         log_message("debug", "[Home] login req: ". print_r($req, true));
         log_message("debug", "[Home] login request getjson: ". print_r($req->getJSON(true), true));
@@ -181,8 +193,8 @@ class Home extends BaseController
 //            }
 //        }
 
-//        $data = $req->getJson(true);
-        $data = $req->getVar();
+        $data = $req->getJson(true);
+//        $data = $req->getVar();
         log_message("debug", "[Home] login \$data: " . print_r($data, true));
         $isUser = $users->find($data['user_id']);
 
@@ -219,40 +231,38 @@ class Home extends BaseController
 
             //자동로그인일 경우 처리
             log_message("debug", "[Home] login \$data['isAutoLogin']: ".print_r($data['isAutoLogin'], true));
-            if ($data['isAutoLogin'] != 'false') {
-                $session->set('isAutoLogin', true);
-                $session->markAsTempdata('sessionInfo', 30); //추가한 세션을 만료일이 있는 세션으로 변경 - 자동로그인은 1주일만 유지되게 설정 - 5분으로 변경 테스트위함.
+//            if ($data['isAutoLogin'] != 'false') {
+            if ($data['isAutoLogin'] != 0) {
+                $session->set('isAutoLogin', true); //이구문이 의미가 있나?
+//                $session->markAsTempdata('sessionInfo', 30); //추가한 세션데이터의 유효기간을 설정할 수 있다. 30이면 30초간 세션안의 데이터가 유지된다.
 //                $resData['sessionInfo']['isAutoLogin'] = true;
+                $cookie = [
+                    'name' => 'autologin',
+                    'value' => 'true',
+                    'expire' =>  new DateTime('+20 seconds', new DateTimeZone('Asia/Seoul')), //+1 hours +1 minutes
+                    'path' => '/',
+                    'prefix' => "id_".$isUser['user_id']."__",
+                    'secure' => false,
+                    'httponly' => false,
+//                   'samesite' => 'none'//CookieInterface::SAMESITE_NONE
+                ];
+                $res->setCookie($cookie);   //자동로그인 관련 쿠키를 응답에 설정해놓음
             }
             //세션 정보 응답할 데이터 배열에 추가
             $resData['sessionInfo'] = $session->get('sessionInfo');
 
-
-            $testEncript  = 'styner14@naver.com';
-            $testE_res = $this->encrypter->encrypt($testEncript);  //decrypt
-            $cookie = new Cookie(
-                'test_token',
-                $testE_res,
-                [
-                    'expires' => time() + 600,//new DateTime('+5 minutes', new DateTimeZone('Asia/Seoul')),
-                    'path' => '/',
-                    'secure' => false,
-                    'prefix' => '_ci_test_',
-                    'httponly' => false,
-//                    'samesite' => 'none'
-                ]
-            );
-            $cookie2 = [
-                'name' => 'test_token',
-                'value' => '$testE_res',
-                'expires' =>  time() + 300,//new DateTime('+1 hours', new DateTimeZone('Asia/Seoul')),
-                'path' => '/',
-                'secure' => false,
-                'prefix' => '_ci_cookie2_',
-                'httponly' => false,
-//                'samesite' => 'none'//CookieInterface::SAMESITE_NONE
-            ];
-
+//            $cookie = new Cookie(
+//                'autologin',
+//                'true',
+//                [
+//                    'expires' => time() + 600,//new DateTime('+5 minutes', new DateTimeZone('Asia/Seoul')), //'+1 hours'
+//                    'path' => '/',
+//                    'secure' => false,
+//                    'prefix' => "id_".$isUser['user_id']."__",
+//                    'httponly' => false,
+//                    'samesite' => 'none'//CookieInterface::SAMESITE_NONE
+//                ]
+//            );
 //            return $res->setHeader('cookietest',$cookie->toHeaderString())->setCookie($cookie2)->setJSON($resData);
             return $res->setJSON($resData);
 
@@ -270,6 +280,8 @@ class Home extends BaseController
     }
 
 
+
+
     //로그아웃 클릭시
     public function logout() : ResponseInterface
     {
@@ -282,7 +294,7 @@ class Home extends BaseController
 
 //        $cookieName = $_COOKIE('ci_session_');
         $is_session_exist = $session->get('sessionInfo') != null;
-        $tmp = $is_session_exist ? "세션 값이 존재합니다." : "세션 값이 없습니다."; 
+        $tmp = $is_session_exist ? "세션 값이 존재합니다." : "세션 값이 없습니다.";
         log_message("debug", "[Home] logout \$session->get('sessionInfo'): ".print_r($session->get('sessionInfo'), true));
         log_message("debug", "[Home] logout \$tmp: ".print_r($tmp, true));
 
@@ -293,8 +305,23 @@ class Home extends BaseController
 
         if ($session->has('sessionInfo')) { //(!session_id())
 //            $session->remove('sessionInfo'.$data['session_id']);
-//            $session->destroy();
-            $session->stop();
+            $session->destroy();
+//            $session->stop();
+
+            $cookie = new Cookie(
+                'autologin',
+                'true',
+                [
+                    'expires' => time() -10,//new DateTime('+5 minutes', new DateTimeZone('Asia/Seoul')), //'+1 hours'
+                    'path' => '/',
+                    'secure' => false,
+                    'prefix' => "id_".$data['user_id']."__",
+                    'httponly' => false,
+//                    'maxage' => 0
+                ]
+            );
+//            $res->setCookie($cookie);   //자동로그인 관련 쿠키를 응답에 설정해놓음
+            $res->setHeader('set-cookie',$cookie->toHeaderString());   //자동로그인 관련 쿠키를 응답에 설정해놓음
 
             $resData = [
                 'result' => true,
@@ -314,31 +341,31 @@ class Home extends BaseController
         }
     }
 
+
+
+
+
     //세션 있는지 확인
     public function isSession() : ResponseInterface
     {
-//        if (session_id() != null) {
-//            log_message("debug", "[Home] isSession 세션이 존재하지 않음. 그래서 생성 ");
-//            $session = session();
-//            $session->stop();
-//        }
+        $session = session();
         $res = $this->response;
         log_message("debug", "[Home] isSession:".print_r(session_id(), true));
 
         $resData = null;
-        if (!session_id()) {
+        if ($session->has('sessionInfo')) {
             $resData = [
-                'result' => false,
+                'result' => true,
                 'session_id' => session_id(),
-                'msg' => '세션이 없음.'
+                'sessionInfo' => $session->get('sessionInfo'),
+                'msg' => '세션값이 존재.'
             ];
 
         } else {
             $resData = [
-                'result' => true,
+                'result' => false,
                 'session_id' => session_id(),
-//                'sessionInfo' => $session->get('sessionInfo'),
-                'msg' => '세션이 존재.'
+                'msg' => '세션값이 없음.'
             ];
         }
         return $res->setJSON($resData);
@@ -757,6 +784,70 @@ class Home extends BaseController
             return $res->setJSON($e->getMessage());
         }
     }
+
+
+    //댓글 수정 완료시
+    public function noticeUpdateReplyComplete() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $notice_reply = new Notice_reply();
+
+        $data = $req->getJSON(true);
+        log_message('debug', '[Home] noticeUpdateReplyComplete $data: '.print_r($data, true));
+
+        try {
+            $resData = $notice_reply->update($data['notice_reply_no'], $data );
+            if ($resData == true) {
+                return $res->setJSON([
+                    'result' => $resData,
+                    'msg' => '댓글수정 성공'
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => $resData,
+                    'msg' => '댓글수정 실패'
+                ]);
+            }
+
+        }catch (\ReflectionException|DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+    //댓글 삭제 완료시
+    public function noticeDeleteReply() : ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $notice_reply = new Notice_reply();
+
+        $data = $req->getJSON(true);
+        log_message('debug', '[Home] noticeDeleteReply $data: '.print_r($data, true));
+
+        try {
+            $resData = $notice_reply->delete($data['notice_reply_no']);
+            if ($resData == true) {
+                return $res->setJSON([
+                    'result' => $resData,
+                    'msg' => '댓글삭제 성공'
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => $resData,
+                    'msg' => '댓글삭제 실패'
+                ]);
+            }
+
+        }catch (\ReflectionException|DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+
+
 
 
 

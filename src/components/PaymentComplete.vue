@@ -34,15 +34,19 @@
 <script>
 import { onMounted, reactive, toRefs } from 'vue'
 import { useStore } from '@/stores/store';
+import { useRoute } from 'vue-router';
 
 export default {
     name: 'PaymentComplete',
     setup() {
         const store = useStore();
+        const route = useRoute();
         const state = reactive({
             test: '결제가 완료되었습니다.',
             isOrderCheck: false,
         })
+        const resInfo = route.params;           //결제(부트페이)에서 받아온 결제완료 정보
+        console.log('[PaymentComplete] resInfo: ', resInfo);
 
         const test = () => {
             setTimeout(() => {

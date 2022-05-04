@@ -121,6 +121,10 @@
 
             <!-- 페이징 부분 -->
             <div class="flex justify-evenly w-96 ml-20">
+                <button v-if="noticeStore.pagingC.lastPage > 10 " @click="gotoClickedPage(1, $event)" class="mr-1" >
+                    <font-awesome-icon class="text-gray-700" :icon="['fas', 'angles-left']"></font-awesome-icon>
+                </button> 
+
                 <button v-if="noticeStore.pagingC.prevPage != 0 " @click="gotoClickedPage(noticeStore.pagingC.prevPage, $event)" >
                     <font-awesome-icon class="text-gray-700" :icon="['fas', 'square-caret-left']"></font-awesome-icon>
                 </button> 

@@ -20,7 +20,13 @@ class User_order extends \CodeIgniter\Model
         'method',
         'product_name',
         'card_name',
-        'verify_valid'
+        'verify_valid',
+        'is_cancel',
+        'card_no',
+        'product_image',
+        'product_price',
+        'order_state'
+
     ];
     protected $primaryKey = 'order_no';
 

@@ -19,7 +19,7 @@ export const useNoticeStore = defineStore('noticeStore', {
                 noticeSearch: '',
                 noticeSearchType: '제목'
             },
-            classVar: 1,                    //paging에서 선택된 페이지 css적용에 사용되는 변수
+            classVar: 1,                    //paging에서 선택된 페이지번호 css적용(bold)에 사용되는 변수. 페이지번호와 이변수 값이 같으면 true라서 :class가 적용되는 방식
             rowClickedCSSVar: 0,
 
             //댓글쪽 변수

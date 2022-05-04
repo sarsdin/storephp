@@ -15,6 +15,8 @@ import payment from "../components/Payment.vue";
 import paymentComplete from "../components/PaymentComplete.vue";
 import tos from "../components/Tos.vue";
 import orderCheck from "../components/OrderCheck.vue";
+import orderCheckDetail from "../components/OrderCheckDetail.vue";
+import orderAdmin from "../components/OrderAdmin.vue";
 
 
 const routes = [
@@ -89,7 +91,18 @@ const routes = [
                 path: 'orderCheck',
                 name: 'orderCheck',
                 components: { home: orderCheck }
-            }
+            },
+            {
+                path: 'orderCheckDetail',
+                name: 'orderCheckDetail',
+                components: { home: orderCheckDetail }
+            },
+            {
+                path: 'orderAdmin',
+                name: 'orderAdmin',
+                components: { home: orderAdmin }
+            },
+
 
             
         ],

@@ -29,8 +29,8 @@ class Cors implements FilterInterface
         //리소스를 허용하는지에 대한 정보를 추가하여 준다.
 
         //(허용할) 들어오는 요청의 출처를 적는 곳. *은 모든 출처(요청한곳)에 이 서버의 리소스 접근을 허용한다는 뜻
-        header("Access-Control-Allow-Origin: *"); //http://192.168.112.128:80
-//        header("Access-Control-Allow-Credentials: true"); //cookie 허용인데 Origin 과는 같이 못쓰는 옵션
+        header("Access-Control-Allow-Origin: http://192.168.112.128:80"); //
+        header("Access-Control-Allow-Credentials: true"); //cookie 허용인데 Origin 과는 같이 못쓰는 옵션
         //어떤 헤더들을 허용할지 명시하는 곳.
         header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Content-Length, Accept-Encoding, Accept, Access-Control-Requested-Method, Authorization, X-CSRF-Token, Cookie");
         header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PATCH, PUT, DELETE"); //어떤 메소드를 허용할지 대한 곳곳

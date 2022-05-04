@@ -4,10 +4,10 @@
     <!-- 헤더 -->
     <div>
         <h1 class="text-2xl font-bold lg:text-3xl">
-            {{ product.product['product_name'] }}
+            {{ product['product_name'] }}
         </h1>
         <p class="mt-1 text-sm text-gray-500">
-            카테고리: {{ product.product.category_code }}
+            카테고리: {{ product.category_code }}
         </p>
     </div>
 
@@ -43,17 +43,17 @@
             <!-- 상단 동그라미 -->
             <fieldset class="p-0">
                 <legend class="text-xl font-bold">
-                {{ product.product['product_name'] }}
+                {{ product['product_name'] }}
                 </legend>
             </fieldset>
-            <!-- <input v-model="product.product['product_name']" type="text" class="w-full px-4 bg-gray-100 border rounded"> -->
+            <!-- <input v-model="product['product_name']" type="text" class="w-full px-4 bg-gray-100 border rounded"> -->
 
-            <div class="text-xl font-bold">재고: {{ product.product['product_stock'] }}</div>
-            <!-- <input v-model.number="product.product['product_stock']" type="number" class="w-full px-4 bg-gray-100 border rounded" /> -->
+            <div class="text-xl font-bold">재고: {{ product['product_stock'] }}</div>
+            <!-- <input v-model.number="product['product_stock']" type="number" class="w-full px-4 bg-gray-100 border rounded" /> -->
 
-            <div class="text-xl font-bold">SPEC: {{ product.product.product_spec }}</div>
+            <div class="text-xl font-bold">SPEC: {{ product.product_spec }}</div>
             <!-- <div class="px-4 bg-gray-100 border rounded">
-                <input v-model="product.product.product_spec" type="text" class="w-full bg-gray-100 border rounded" placeholder="SPEC" />
+                <input v-model="product.product_spec" type="text" class="w-full bg-gray-100 border rounded" placeholder="SPEC" />
                 <p class="text-sm">
                     <span class="block">
                     </span>
@@ -71,11 +71,11 @@
             </div>
 
             <hr>
-            <button @click="purChaseClicked" type="button" class="w-full px-6 py-3 text-sm font-bold tracking-wide text-white uppercase bg-red-700 rounded hover:bg-red-800">
+            <button @click="purChaseClicked()" type="button" class="w-full px-6 py-3 text-sm font-bold tracking-wide text-white uppercase bg-red-700 rounded hover:bg-red-800">
                 바로구매
             </button>
 
-            <button @click="cartClicked" type="button" class="w-full px-6 py-3 text-sm font-bold tracking-wide uppercase bg-gray-100 border border-gray-300 rounded" >
+            <button @click="cartClicked()" type="button" class="w-full px-6 py-3 text-sm font-bold tracking-wide uppercase bg-gray-100 border border-gray-300 rounded" >
                 장바구니
             </button>
         </form>
@@ -96,6 +96,60 @@
         </div>
 
     </div><!--본문끝-->
+
+    <!-- 리뷰 시작 -->
+    <section>
+        <div class="max-w-screen-xl px-4 py-8 mx-auto sm:px-6 lg:px-8">
+            <h2 class="text-xl font-bold sm:text-2xl">사용자 리뷰</h2>
+
+            <div class="flex items-center mt-4">
+            <p class="text-3xl font-medium">
+                {{ 리뷰평균별점계산결과.toFixed(1) }}
+                <span class="sr-only"> 평균 리뷰 점수 </span>
+            </p>
+
+            <div class="ml-4">
+                <div class="flex -ml-1"> 
+                    <svg v-for="index in Math.round( 리뷰평균별점계산결과 ) " :key="index" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <svg v-for="index in 5-Math.round( 리뷰평균별점계산결과 )" :key="index" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-200" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                </div>
+
+                <p class="mt-0.5 text-xs text-gray-500">총 리뷰수 {{ product_review.length }}개</p>
+            </div>
+            </div>
+
+            <div class="grid grid-cols-1 mt-8 lg:grid-cols-2 gap-x-16 gap-y-12">
+            <!-- 리뷰 목록 시작 -->
+            <blockquote v-for="item in product_review">
+                <header class="sm:items-center sm:flex">
+                <div class="flex -ml-1">
+                    <svg v-for="index in Number(item.review_grade)" :key="index" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <svg v-for="index in 5-Number(item.review_grade)" :key="index" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-200" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                </div>
+
+                <p class="mt-2 font-medium sm:ml-4 sm:mt-0"> {{ (item.writer).replace(/(..)$/, '**') }} </p>
+                </header>
+
+                <p v-html="item.content" class="mt-2 text-gray-700">  </p>
+
+                <footer class="mt-4">
+                <p class="text-xs text-gray-500"> {{ item.write_date }} </p>
+                </footer>
+            </blockquote>
+
+            
+            </div>
+        </div>
+    </section>
+
 </div>
 
 </template>
@@ -105,7 +159,9 @@ import { reactive, ref, toRefs, getCurrentInstance } from 'vue'
 import http from "@/modules/http";
 import Qeditor from './Qeditor.vue'
 import { computed } from '@vue/reactivity';
-import { routeLocationKey, useRoute } from 'vue-router';
+import { routeLocationKey, useRoute, useRouter } from 'vue-router';
+import { useLoginStore } from '@/stores/login';
+import { useStore } from '@/stores/store';
 
 export default {
     name: "ProductDetail",
@@ -113,8 +169,11 @@ export default {
     // props: ['productNo'],
 
     setup(props,context) {
+        const userInfo = useLoginStore();
+        const store = useStore();
         const { proxy } = getCurrentInstance(); //global instance의 global변수를 담고있는 proxy객체를 가져옴.
         const route = useRoute();
+        const router = useRouter();
         const selectCount = ref(1); //선택한 상품 수량 - 이 수량에 따라 computedPrice가격도 같이 계산되어 변한다.
         const computedPrice = computed(() => {
             return Number(product.product.product_price * selectCount.value).toLocaleString('ko-KR');
@@ -129,7 +188,8 @@ export default {
                 product_spec: '',
                 product_desc: '',
             },
-            product_image: {}
+            product_image: {},   //[]을 {}로 받아도 무방하네 결국 []도 객체니깐? 좀더 알아보자
+            product_review: [],  //이건 그냥 []로 받아버리기
         })
         const slide = ref(1)    //carousel의 슬라이드 번호를 담고 있으며 슬라이드 번호는 1부터 시작한다.(0이 아님)
         let isImageLoad = false;
@@ -144,7 +204,7 @@ export default {
                     // ifile.value.forEach(element => {  //forEach가 function이 아니라고 에러남
                     //     tmp.push(URL.createObjectURL(element))
                     // });
-                    if (isImageLoad) { //서버통신으로 이미지가 로드되었다면 true로 바뀔것이고 ifile에 이미지대입했을것이기에 그대로 리턴만해준다.
+                    if (isImageLoad) { //서버통신으로 이미지가 로드되었다면 true로 바뀔것이고 ifile에 이미지대입했을것이기에 그대로 리턴만해준다. 성능위함
                         isImageLoad = false; //이미지변경의 경우를 고려하여 미리 false로 초기화 해줌.
                         return ifile.value;
                     }
@@ -153,6 +213,7 @@ export default {
                         tmp.push(URL.createObjectURL(element))
                     }
                     return tmp;
+
                 } else {        //기본 노이미지일때 디폴트 화면
                     ifile.value.push('https://img.apti.co.kr/aptHome/images/sub/album_noimg.gif')
                     return ifile.value;
@@ -166,91 +227,84 @@ export default {
             // return URL.createObjectURL(ifile.value[0]);
         })
 
-        //서버로부터  데이터 로딩
-        http.get('/productc/getProductInfo', {
-            params:{
-                product_no: route.query.product_no
-            }
-        }).then((res) => {
-            proxy.$log('[ProductModalUpdate] http.get: ', res.data); //result:상품정보, resultImg:이미지경로정보
-            product.product = res.data.result;
-            //받아온 이미지경로 정보배열을 존재확인 후 임시배열에 주소형식으로 저장하여 ifile에 넣으면 ifileC에서 이미지슬라이드로 넘김
-            if (res.data.resultImg[0] != null) {
-                isImageLoad = true;     //ifileC getter에서 이미지로딩이 성공적으로 로딩되었는지(if문) 확인하는 용도.
-                const tmp = [];
-                for (const item of res.data.resultImg) {
-                    tmp.push('http://192.168.112.128/uploads/'+item['stored_file_name']);
+
+        const 서버로부터데이터로딩 = () => {
+            http.get('/productc/getProductInfo', {
+                params:{
+                    product_no: route.query.product_no
                 }
-                ifileC.value = tmp;
-            }
-            editor.value = res.data.result.product_desc; //Qeditor의 내용에 받아온 상품설명값을 넣음
-           
-        }).catch((error) => {
-            proxy.$log('[ProductModalUpdate] http.get error: ', error.response.data);
-        })
+            }).then((res) => {
+                proxy.$log('[ProductDetail] 서버로부터데이터로딩: ', res.data); //result:상품정보, resultImg:이미지경로정보
+                product.product = res.data.result;
+                //받아온 이미지경로 정보배열을 존재확인 후 임시배열에 주소형식으로 저장하여 ifile에 넣으면 ifileC에서 이미지슬라이드로 넘김
+                if (res.data.resultImg[0] != null) {
+                    isImageLoad = true;     //ifileC getter에서 이미지로딩이 성공적으로 로딩되었는지(if문) 확인하는 용도. 이미지를 잘받아왔으니 true를 넣는다는 뜻.
+                    const tmp = [];
+                    for (const item of res.data.resultImg) {
+                        tmp.push('http://192.168.112.128/uploads/'+item['stored_file_name']);
+                    }
+                    ifileC.value = tmp;
+                }
+                editor.value = res.data.result.product_desc; //Qeditor의 내용에 받아온 상품설명값을 넣음
+                product.product_review = res.data.resultReview; //상품 리뷰목록 대입
+               
+            }).catch((error) => {
+                proxy.$log('[ProductDetail] 서버로부터데이터로딩 error: ', error.response.data);
+            })
+        }
+        서버로부터데이터로딩();
+
 
         //바로구매 버튼 클릭시
         const purChaseClicked = () => {
-            
+            cartClicked();
+            router.push({name: 'cart'});
         }
 
         //장바구니 버튼 클릭시
         const cartClicked = () => {
-            
-        }
-
-        //상품수정 버튼 클릭
-        const modifyClicked = () => {
-            let data = new FormData();
-            data.append('product_no', product.product.product_no)
-            data.append('product_name', product.product.product_name)
-            data.append('category_code', product.product.category_code)
-            data.append('product_stock', product.product.product_stock)
-            data.append('product_price', product.product.product_price)
-            data.append('product_spec', product.product.product_spec)
-            data.append('product_desc', editor.value)
-
-            //다중 이미지를 올리면 FileList객체안의 개별 이미지 파일들을 FormData의 'produec_image[]'라는 키에 추가적으로 append한다.
-            if (product.product_image.length > 0) {
-                for (const key in product.product_image) {
-                    if (Object.hasOwnProperty.call(product.product_image, key)) {
-                        const element = product.product_image[key];
-                        //FormData의 하나의 key에 다중 파일을 추가할려는 경우 key name형식을 []로 선언해야함. 
-                        //태그에서의 경우는 <input name="product_image['key1']" <input name="product_image['key2']" <<이런식으로 지정하면 하나의 배열로 서버에서 받기 가능!
-                        //그래야 서버쪽에서 형식을 파악하고 다중파일을 인식해서 가져올 수 있음
-                        data.append('product_image[]', element);
+            http.get('/productc/addProductInCart', {
+                params:{
+                    product_no: route.query.product_no,
+                    product_count: selectCount.value,   //추가할 개수
+                    cart_owner: userInfo.info.id
+                }
+            }).then((res) => {
+                if (res.data.result == 'false') {
+                    proxy.$log('[ProductDetail] 장바구니추가 res false: ', res.data.msg);
+                } else {
+                    // store.$state.cartCount += 개수선택.value;
+                    selectCount.value = 1; //장바구니 추가후에는 초기화해줌
+                    let doYouGo = confirm('상품이 장바구니에 담겼습니다. 확인하시겠습니까?')
+                    if(doYouGo){
+                        store.cartStateMutation(); //전역 스토어의 장바구니 현황을 갱신하기 위해 실행해준다.
+                        router.push({name: 'cart'})
                     }
                 }
-            }
+                
+            }).catch(error => proxy.$log('[ProductDetail] 장바구니추가 error: ', error.response.data))
             
-            proxy.$log('product_name data: ', data.getAll('product_name'));
-            proxy.$log('modifyClicked data: ', data.getAll('product_image'));
-
-            //서버통신
-            http.post('/productc/updateProduct', data, {
-                headers:{
-                    'Content-Type': 'multipart/form-data'
-                },
-                // maxContentLength: 1,  //응답받는 콘텐츠 사이즈
-                // maxBodyLength: 1      //요청하는 바디의 사이즈
-            }).then((res) => {
-                if (res != 'false') {
-                    alert('상품수정 되었습니다.')
-                    proxy.$log('[ProductModalUpdate]상품수정modifyClicked res: ' , res.data)
-                    context.emit('modalOff', false)
-                    window.location.reload();
-                } else{
-                    alert('상품수정 중 오류가 발생하였습니다.')
-                    proxy.$log('[ProductModalUpdate]상품수정modifyClicked res: ' , res.data)
-                }
-            }).catch((error) => {
-                proxy.$log('상품수정에러', error.response.data)
-            })
+            //db추가 & 장바구니 아이콘에 1,2 ..개수표시 (이건 pinia에 글로벌 변수로 계산되게 해야할듯 개수선택변수의 숫자에 따라 글로벌변수가 자동으로 계산되게끔) 
         }
+
+        const 리뷰평균별점계산결과 = computed(() => {
+            const initialValue = 0;
+            const sum = product.product_review.reduce((prev, crrentv) => {
+                proxy.$log('[ProductDetail] 리뷰평균별점계산결과 length: ', product.product_review.length);
+                proxy.$log('[ProductDetail] 리뷰평균별점계산결과 prev: ', prev);
+                proxy.$log('[ProductDetail] 리뷰평균별점계산결과 currt: ', Number(crrentv.review_grade));
+
+                return Number(prev) + Number(crrentv.review_grade);
+            }, initialValue);
+            const avg = (sum / product.product_review.length) || 0 ;  //아니면 0 이라는 뜻이니 앞의 숫자가 null or undefined이면 0을 리턴한다는 뜻인듯??
+            proxy.$log('[ProductDetail] 리뷰평균별점계산결과: ', avg);
+            return avg;
+        })
+        
 
 
         return {
-            editor, ifile, ifileC, slide, product, selectCount, computedPrice,
+            editor, ifile, ifileC, slide, ...toRefs(product), selectCount, computedPrice, 리뷰평균별점계산결과,
             onImageClicked(e){
                 // alert('clicked')
                 if (e.target.tagName == 'IMG') {    //label을 클릭했을때 전파되는 target요소가 img태그라면 기본click작동 중지하기.
