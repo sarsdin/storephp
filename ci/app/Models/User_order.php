@@ -25,7 +25,9 @@ class User_order extends \CodeIgniter\Model
         'card_no',
         'product_image',
         'product_price',
-        'order_state'
+        'order_state',
+        'cancel_msg',
+        'transport_code'
 
     ];
     protected $primaryKey = 'order_no';

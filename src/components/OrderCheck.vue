@@ -60,7 +60,7 @@
 
                     <div class="flex w-[900px] p-4 border rounded-lg shadow-sm" >
 
-                        <div class="flex flex-1">
+                        <div class="flex flex-1 relative">
                             <img alt="이미지를 로드할 수 없습니다. 재시도 요망" :src="imageLoad(item)"
                                 class="object-cover mr-2 w-36 h-36 bg-slate-200 rounded-md"  />
                             <!-- itemImgLoad != null? itemImgLoad:'https://img.apti.co.kr/aptHome/images/sub/album_noimg.gif'  -->
@@ -71,18 +71,27 @@
                                 <div class="mt-5 text-gray-500">
                                     총 결제 금액: {{ Number(item.product_price).toLocaleString('ko-KR') }} 원
                                 </div>
+                                <div v-if="운송장번호온오프(item)" class="mt-5 text-gray-500">
+                                    운송장번호: {{ item.transport_code }}
+                                </div>
+                            </div>
+                            <div class="absolute right-5 top-1">
+                                <button @click="문의하기(item)" class="p-1 text-gray-500 border hover:bg-gray-100 rounded-md">요청</button>
                             </div>
                         </div>
 
                         <div class="flex flex-col justify-center items-center pl-4 w-56 h-full space-y-2 border-l-2">
                             <div>
-                                <button class="w-48 py-2 text-blue-700 border border-blue-600 rounded"> {{ item.order_state }}</button>
+                                <button class="w-48 py-2 text-blue-700 border border-blue-600 rounded"> 
+                                    {{ item.order_state }}
+                                </button>
                             </div>
                             <div>
                                 <button @click="주문상세보기클릭(item)" class="w-48 py-2 text-blue-700 border border-blue-600 rounded">리뷰 작성하기</button>
                             </div>
                             <div>
-                                <button @click="주문취소클릭(item)" class="w-48 py-2 text-blue-700 border border-blue-600 rounded">주문취소</button>
+                                <button v-if="item.is_cancel != null" class="w-48 py-2 text-gray-400 border border-gray-400 rounded">취소요청완료</button>
+                                <button v-if="item.is_cancel == null" @click="주문취소클릭(item)" class="w-48 py-2 text-blue-700 border border-blue-600 rounded">주문취소</button>
                             </div>
                         </div>
 
@@ -93,9 +102,9 @@
                 </div>
             </div>
 
-            <div v-if="store.cartCount == 0" class="flex justify-center w-full p-2 text-xl text-center">
+            <!-- <div v-if="store.cartCount == 0" class="flex justify-center w-full p-2 text-xl text-center">
                 장바구니가 비어 있습니다.
-            </div>
+            </div> -->
 
             <!-- 배송비 레이아웃 -->
             <!-- <div v-if="store.cartCount > 0" class="flex items-center justify-center border-b h-full w-28">
@@ -186,14 +195,49 @@ export default {
         }
 
         const 주문취소클릭 = (item) => {
+            let cancel_msg = prompt('취소사유를 입력해주세요.');
             //todo: 주문취소처리
+            http.post('/paymentc/orderCancel', {
+                order_no: item.order_no,
+                receipt_id: item.receipt_id,
+                receiver_name: item.receiver_name,
+                cancel_msg: cancel_msg,
+                cancel_id: '',
+            }).then((res) => {
+                proxy.$log('[OrderCheck] 주문취소클릭 res: ', res.data)
+                myStore.주문관리리스트로드();
+                
+            }).catch(error=>console.log('[OrderCheck] 주문취소클릭 error: ', error.response.data))
+        }
+
+        const 운송장번호온오프 = (item) => {
+            if ((item.transport_code != '') && (item.transport_code != null)) {
+                return true;
+            } else {
+                return false;
+            }
         }
       
+        const 문의하기 = (item) => {
+            let req = prompt('요청할 사항을 입력해주세요.');
+
+            http.post('/paymentc/requestOrderToAdmin', {
+                order_no : item.order_no,
+                order_qa_writer: item.user_id,
+                order_qa_content: req
+            }).then((res) => {
+                proxy.$log('[OrderCheck] 문의하기 res: ', res.data)
+
+
+            }).catch(error=> console.log('[OrderCheck] 문의하기 error: ', error ))
+        }
+
+
     
         return {
             ...toRefs(state),
             store, myStore,  
-            imageLoad, 기간클릭, 주문상세보기클릭, 주문취소클릭
+            imageLoad, 기간클릭, 주문상세보기클릭, 주문취소클릭, 운송장번호온오프, 문의하기
 
         }
     }
