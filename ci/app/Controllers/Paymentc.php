@@ -2,7 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Models\Cart;
 use App\Models\Deliver_address;
+use App\Models\Order_qa;
 use App\Models\Product;
 use App\Models\Product_reply;
 use App\Models\User_order;
@@ -331,24 +333,26 @@ class Paymentc extends Controller
         $res = $this->response;
         $userOrder = new User_order();
         $userOrderDetail = new Userorder_detail();
+        $cart = new Cart();
+        $product = new Product();
 
         $data = $req->getJSON(true);
-        log_message('debug', '[Paymentc] orderCompleted $data'.print_r($data, true));
+        log_message('debug', '[Paymentc] orderCompleted $data: '.print_r($data, true));
 
         //결제일 객체를 만들고, 그 날짜에 12시간만큼 지난 시간을 설정. 즉, 결제취소 만료시간을 설정하는 것.
         $date = new \DateTime($data['purchased_at']);
         $date->add(new DateInterval('PT12H'));  //DateInterval format -- P(date)나 PT(time)로 시작. P2Y3M4DPT5H26M33S == 2년3개월4일 5시간26분33초 추가한다는 뜻
 
-        //insertBatch 에 데이터로 넣을 row정보들을 받아온 데이터를 순회하여 만듦.
+        //주문상세정보를 위한 insertBatch 에 데이터로 넣을 row정보들을 받아온 데이터를 순회하여 만듦.
         $computedItemsInfo = [];
         for ($i = 0; $i < count($data['computedItemsInfo']); $i++){
             $tmpArray = [
-                'order_no' => $data['computedItemsInfo'][$i]['order_no'],
+                'order_no' => $data['order_no'],
                 'product_no' => $data['computedItemsInfo'][$i]['product_no'],
                 'product_count' => $data['computedItemsInfo'][$i]['product_count'],
-                'product_price' => $data['computedItemsInfo'][$i]['product_price'],
-                'order_detail_status' => $data['computedItemsInfo'][$i]['order_detail_status'],
-                'refund_check' => $date,        //결제 취소 만료시간 설정 // 포맷변경후 넣을려면 ->format( 'Y-m-d H:i:s' )
+                'product_price' => $data['computedItemsInfo'][$i]['computed_price'],
+//                'order_detail_status' => $data['computedItemsInfo'][$i]['order_detail_status'], //이건 개별주문상품을 다루는건데 주문단위로 관리되는 현재는 필요가 없음. 판매자 단위로 쪼개지면 몰라도..
+                'refund_check' => $date->format('Y-m-d H:i:s'),        //결제 취소 만료시간 설정 // 포맷변경후 넣을려면 ->format( 'Y-m-d H:i:s' )
             ];
             array_push($computedItemsInfo, $tmpArray);
         }
@@ -360,14 +364,40 @@ class Paymentc extends Controller
                 $result = $userOrderDetail->insertBatch($computedItemsInfo);
             }
 
+            //장바구니에서 현재 결제완료된 상품들의 정보를 업데이트하고, 상품의 재고를 감소시켜야한다. 취소시에도 똑같이...
+            $cartDeleteData = [];
+            for($i=0; $i<count($data['computedItemsInfo']); $i++) {
+                array_push($cartDeleteData, $data['computedItemsInfo'][$i]['cart_no']); //받은 장바구니데이터를 순회하여 cart_no들을 알아냄.
+            }
+            $cartRes = $cart->delete($cartDeleteData); //위에서 알아낸 cart_no의 배열을 이용해서 해당하는 장바구니 번호의 상품들을 삭제.
+
+            //상품의 재고 감소 부분. 결제정보로부터 상품정보를 얻어와서 해당 상품의 재고를 감소시키고, 상품구매수를 +1 증가시킴.
+            $productUpdateData = [];
+            for ($i = 0; $i < count($data['computedItemsInfo']); $i++){
+                $tmpArray = [
+                    'product_no' => $data['computedItemsInfo'][$i]['product_no'],
+                    'product_stock' => $product->where('product_no', $data['computedItemsInfo'][$i]['product_no'])->findColumn('product_stock')[0] - $data['computedItemsInfo'][$i]['product_count'],
+                    'product_purchasehit' => $product->where('product_no', $data['computedItemsInfo'][$i]['product_no'])->findColumn('product_purchasehit')[0] +1
+                ];
+                array_push($productUpdateData, $tmpArray);
+            }
+            $productRes = $product->updateBatch($productUpdateData, 'product_no');
+
+
             if ($result == false) {
-                $userOrder->db->transComplete();
+                $transactionResult = $userOrder->db->transComplete();
+                if ($transactionResult == false) {
+                    $userOrder->db->transRollback();
+                }
                 return $res->setJSON([
                     'result' => $result,
                     'msg' => '결제마무리작업을 실패했습니다.'
                 ]);
             } else{
-                $userOrder->db->transComplete();
+                $transactionResult = $userOrder->db->transComplete();
+                if ($transactionResult == false) {
+                    $userOrder->db->transRollback();
+                }
                 return $res->setJSON([
                     'result' => "주문상세정보까지 추가완료. ('$result'줄)",
                     'msg' => '결제마무리작업을 성공.'
@@ -390,7 +420,7 @@ class Paymentc extends Controller
 //        $userOrderDetail = new Userorder_detail();
 
         $data = $req->getJSON(true);
-        log_message('debug', '[Paymentc] getOrderCheckList $data'.print_r($data, true));
+        log_message('debug', '[Paymentc] getOrderCheckList $data: '.print_r($data, true));
 
         $namedBinding = [
             'user_id' => $data['user_id'],
@@ -402,17 +432,18 @@ class Paymentc extends Controller
                         and 
                             case
                                 when :date_range: != '99' 
-                                then order_date between date_sub(curdate(), interval :date_range: DAY ) and curdate()
-                                else order_date between '2022-01-01' and curdate()
+                                then order_date between date_sub(CURRENT_TIMESTAMP(), interval :date_range: DAY ) and CURRENT_TIMESTAMP()
+                                else order_date between '2022-01-01' and CURRENT_TIMESTAMP()
                             end ";
         //: << 바인딩 오류는 ide 의 valid engine 문제
 
         try {
             $userOrder->db->transStart();
             $result = $userOrder->db->query($sql, $namedBinding);
-            log_message('debug', '[Paymentc] getOrderCheckList $result'.print_r($result, true));
-            log_message('debug', '[Paymentc] getOrderCheckList $ getLastQuery'.print_r($userOrder->db->getLastQuery(), true));
+            log_message('debug', '[Paymentc] getOrderCheckList $result: '.print_r($result, true));
+            log_message('debug', '[Paymentc] getOrderCheckList $ getLastQuery: '.print_r($userOrder->db->getLastQuery(), true));
             $result = $result->getResultArray();
+            log_message('debug', '[Paymentc] getOrderCheckList getResultArray: '.print_r($result, true));
 
             if ($result == false) {   //query 결과 주문이 없으면 0 row 인데 0이라서 false 로 처리됨.
                 $userOrder->db->transComplete();
@@ -555,6 +586,253 @@ class Paymentc extends Controller
             return $res->setJSON($e->getMessage());
         }
     }
+
+
+
+    //주문관리 리스트 로드
+    public function getOrderCheckAdminList(): ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $userOrder = new User_order();
+        $userOrderDetail = new Userorder_detail();
+        $orderQa = new Order_qa();
+
+        $data = $req->getJSON(true);
+        log_message('debug', '[Paymentc] getOrderCheckAdminList $data: '.print_r($data, true));
+
+        $namedBinding = [
+            'user_id' => $data['user_id'],
+            'date_range' => $data['date_range'],
+            'order_state' => $data['order_state'],
+        ];
+
+        $sql = " SELECT * 
+                from user_order WHERE 
+                        case
+                            when :date_range: != '99' 
+                            then order_date between date_sub(CURRENT_TIMESTAMP(), interval :date_range: DAY ) and CURRENT_TIMESTAMP()
+                            else order_date between '2022-01-01' and CURRENT_TIMESTAMP()
+                        end
+                    and
+                        case
+                            when :order_state: != '전체' 
+                            then order_state = :order_state:
+                            else 1=1
+                        end  ";
+        //: << 바인딩 오류는 ide 의 valid engine 문제, != '99' 는 프론트에서 99일이라는 값은 2022년이라는 카테고리를 가리키고있기때문에 99가 아니면 반드시 참으로 첫번째 명령이 실행됨.
+
+        try {
+            $result = $userOrder->db->query($sql, $namedBinding);
+            log_message('debug', '[Paymentc] getOrderCheckAdminList $ getLastQuery'.print_r($userOrder->db->getLastQuery(), true));
+            $result = $result->getResultArray();
+            log_message('debug', '[Paymentc] getOrderCheckAdminList $result'.print_r($result, true));
+
+            //...////////////////
+//            $resData = $userOrder->where('order_state', $data['order_state'])->findAll();  //결제완료, 배송준비, 배송중, 배송완료
+
+            //각 목록당 요청사항(테이블)있는지 확인하여 목록 배열 넣어주기.
+            for ($i=0; $i<count($result); $i++) {
+                $tmpResult = $orderQa->where('order_no', $result[$i]['order_no'])->findAll();
+                $result[$i]['order_qa_list'] = $tmpResult;
+            }
+
+            if ($result == false) {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => '주문관리목록 로딩에 실패했습니다.'
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => '주문관리목록 로딩에 성공!'
+                ]);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+
+
+    //주문관리 리스트 주문상태 업데이트
+    public function updateOrderState(): ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $userOrder = new User_order();
+        $userOrderDetail = new Userorder_detail();
+
+        $data = $req->getJSON(true);
+        log_message('debug', '[Paymentc] updateOrderState $data: '.print_r($data, true));
+
+
+        try {
+            $result = $userOrder->update($data['order_no'], $data);  //결제완료, 배송준비, 배송중, 배송완료
+            log_message('debug', '[Paymentc] updateOrderState $result'.print_r($result, true));
+
+            if ($result == false) {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => '주문관리 주문상태 업데이트에 실패했습니다.'
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => '주문관리 주문상태 업데이트에 성공!'
+                ]);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+    //주문관리 주문취소 클릭시
+    public function orderCancel(): ResponseInterface
+    {
+        $client = \Config\Services::curlrequest();  //curl 서비스클래스 로드
+        $req = $this->request;
+        $res = $this->response;
+        $userOrder = new User_order();
+        $userOrderDetail = new Userorder_detail();
+
+        $data = $req->getJSON(true);
+        log_message('debug', '[Paymentc] orderCancel $data: '.print_r($data, true));
+
+//        log_message('debug', '[Paymentc] orderCancel $data: '.print_r(curl_version(), true));
+
+        $s_body = '{ "application_id" : "625ea2602701800020f69145", "private_key" : "YUO1/0ob+m3RzegJEIqUzTylIfga5EJRvoTM59gjbgg=" }';
+        $acc_token = $client->setHeader('Content-Type', 'application/json')
+            ->setBody($s_body)->request('POST', 'https://api.bootpay.co.kr/request/token');
+//        $acc_token = $client->request('POST', 'https://api.bootpay.co.kr/request/token'
+//            ,[
+//                'headers' => [
+//                    'Content-Type' => 'application/json'
+//                ],
+//                'body' => '{ "application_id" : "625ea2602701800020f69145", "private_key" : "YUO1/0ob+m3RzegJEIqUzTylIfga5EJRvoTM59gjbgg=" }'
+//
+//            ]);
+        $decoded_acc_token = json_decode($acc_token->getBody(), true); //body 의 내용이 이미 json형식으로 보내져왔음. 그래서 해석만하면됨.
+        log_message('debug', '[Paymentc] orderCancel $decoded_acc_token: '.print_r($decoded_acc_token, true));
+//        log_message('debug', '[Paymentc] orderCancel $decoded_acc_token2: '.print_r($acc_token, true));
+
+//        $decoded_acc_token['data']['token']
+
+        $headerSetting = [
+            'Content-Type' => 'application/json',
+            'Authorization' => $decoded_acc_token['data']['token']
+            ];
+
+        $cancelData = '{ "receipt_id" : "'.$data['receipt_id'].'", "name" : "'.$data['receiver_name'].'" , "reason" : "'.$data['cancel_msg'].'" }';
+
+        $c_response = $client->setHeader('Content-Type','application/json')
+            ->setHeader('Authorization',$decoded_acc_token['data']['token'])
+            ->setBody($cancelData)->request('POST', 'https://api.bootpay.co.kr/cancel');
+//        $c_response = $client->request('POST', 'https://api.bootpay.co.kr/cancel',
+//            [
+//                'headers' => [
+//                    'Authorization' => 'd6941c650061e3eaddd3f4718ab63e0983c1f6a0a0a01370c1b1ffa90ddd0b51'
+//                ],
+//                'json' => [
+//                    'receipt_id' => [[ $data['receipt_id'] ]],
+//                    'name' => $data['receiver_name'],
+//                    'reason' => $data['cancel_msg'],
+//                ]
+//            ]);
+//        $body = $c_response->getJSON();
+        $decoded_cancelData = json_decode($c_response->getBody(), true);
+        log_message('debug', '[Paymentc] orderCancel $c_response: '.print_r($decoded_cancelData, true));
+
+
+        try {
+
+            $updateData = [
+                'is_cancel' => $decoded_cancelData['data']['revoked_at'],
+                'cancel_msg' => $data['cancel_msg']
+            ];
+            $result = $userOrder->set($updateData)->update($data['order_no']);  //결제완료, 배송준비, 배송중, 배송완료
+            log_message('debug', '[Paymentc] orderCancel $result'.print_r($result, true));
+
+            if ($result == false) {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => '주문관리 주문취소 실패했습니다.'
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => '주문관리 주문취소 성공!'
+                ]);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+//(
+//[status] => 200
+//[code] => 0
+//[message] =>
+//[data] => Array
+//(
+//[receipt_id] => 627373c5e38c30002011d97c
+//[order_id] => 39
+//[request_cancel_price] => 3800
+//[remain_price] => 0
+//[remain_tax_free] => 0
+//[cancelled_price] => 3800
+//[cancelled_tax_free] => 0
+//[cancel_id] => 9f3eee10-54a2-4f65-bf55-3a8c6a83d4a9-1651733655
+//[revoked_at] => 2022-05-05 15:54:15
+//[tid] => 22375365477126
+//)
+//
+//)
+
+
+
+    //주문관리 리스트 주문상태 업데이트
+    public function requestOrderToAdmin(): ResponseInterface
+    {
+        $req = $this->request;
+        $res = $this->response;
+        $userOrder = new User_order();
+        $userOrderDetail = new Userorder_detail();
+        $orderQa = new Order_qa();
+
+        $data = $req->getJSON(true);
+        log_message('debug', '[Paymentc] requestOrderToAdmin $data: '.print_r($data, true));
+
+        $data['order_qa_date'] = date('Y-m-d H:i:s');
+
+        try {
+            $result = $orderQa->insert($data);  //결제완료, 배송준비, 배송중, 배송완료
+            log_message('debug', '[Paymentc] requestOrderToAdmin $result'.print_r($result, true));
+
+            if ($result == false) {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => '문의사항 요청 실패했습니다.'
+                ]);
+            } else {
+                return $res->setJSON([
+                    'result' => $result,
+                    'msg' => '문의사항 요청 성공!'
+                ]);
+            }
+
+        } catch (\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+
+
 
 
 

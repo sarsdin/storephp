@@ -7,8 +7,8 @@ export const useMyStore = defineStore('myStore', {
     state: () => {
         return {
             orderCheck:{
-                // orderCheckRange: 1,
                 orderCheckRangeCSS: 1,
+                orderStateRangeCSS: '결제완료',
                 orderInfo: {}           //주문상세조회 클릭시 해당 주문(아이템)의 정보가 저장되는 변수
             },
 
@@ -31,6 +31,24 @@ export const useMyStore = defineStore('myStore', {
                 this.orderCheckList = res.data.result;
 
             }).catch(error => console.log('[my.js]주문조회리스트로드 error :>> ', error.response.data))
+        },
+
+        주문관리리스트로드(orderState){
+            const userInfo = useLoginStore();
+            http.post('/paymentc/getOrderCheckAdminList', {
+                user_id: userInfo.info.id,
+                date_range: this.orderCheck.orderCheckRangeCSS,  //주문조회페이지에서 기간버튼의 활성이 어느것이냐에 따라 불러오는 데이터의 범위가 달라짐
+                order_state: this.orderCheck.orderStateRangeCSS, //주문상태에 따라 불러오는 데이터가 달라짐
+
+            }).then((res) => {
+                console.log('[my.js]주문관리리스트로드 res : ', res.data);
+                
+                this.orderCheckList = res.data.result;
+                this.orderCheckList.forEach((item,i,origin) => {
+                    origin[i].isCustomerReqModalOpen = false;    //요청사항 개별아이템의 리뷰작성하기 버튼클릭시 각해당하는 모달의 오픈여부를 위해 넣어줌.
+                })
+
+            }).catch(error => console.log('[my.js]주문관리리스트로드 error :>> ', error.response.data))
         }
     },
     persist:{

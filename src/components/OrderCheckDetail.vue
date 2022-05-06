@@ -72,7 +72,7 @@
                                 <!-- <button class="w-48 py-2 text-blue-700 border border-blue-600 rounded"> {{ item.order_state }}</button> -->
                             </div>
                             <div>
-                                <button v-if="item.is_review_created == false" @click="리뷰작성하기(item), item.isReviewModalOpen = true" class="w-48 py-2 text-blue-700 border border-blue-600 rounded"
+                                <button v-if="item.is_review_created == false" @click="item.isReviewModalOpen = true" class="w-48 py-2 text-blue-700 border border-blue-600 rounded"
                                 >리뷰 작성하기</button>
                                 <button v-else class="w-48 py-2 text-gray-400 border border-gray-400 rounded"
                                 >리뷰 작성완료</button>
@@ -84,7 +84,7 @@
 
                         <!-- <button @click="isReviewModal = true">모달열기테스트버튼</button> -->
                         <Teleport to="body">
-                            <ReviewModal v-if="item.isReviewModalOpen" :item="item" @modalOff="item.isReviewModalOpen = false">
+                            <ReviewModal v-if="item.isReviewModalOpen" :item="item" @modalOff="item.isReviewModalOpen = false, 리뷰작성하기(item)">
                                 <template v-slot:reviewModal >  
                                     
                                 
@@ -165,7 +165,7 @@
                         총상품가격
                     </div>
                     <div class="ml-3 p-3">
-                        {{ Number( orderInfo.product_price ).toLocaleString('ko-KR') }}원
+                        {{ Number( sumItemsOfPrice ).toLocaleString('ko-KR') }}원
                     </div>
                 </div>
                 <div class="flex items-center">
@@ -189,7 +189,7 @@
                         총결제금액
                     </div>
                     <div class="ml-3 p-3">
-                        {{ Number( Number(orderInfo.product_price) + 3000 ).toLocaleString('ko-KR') }}원
+                        {{ Number( Number(orderInfo.product_price) ).toLocaleString('ko-KR') }}원
                     </div>
                 </div>
                 
@@ -272,13 +272,18 @@ export default {
         const state = reactive({
             count: 0,
             orderInfo: {},
-            items: [],
+            items: [],                  //주문번호정보를 이용하여 서버로부터 불러온 실제 구매한 상품들 목록
             // isReviewModal: false,
         })
-        // state.orderInfo = route.params;  //OrderCheck페이지에서 주문조회클릭으로 넘어온 값
-        state.orderInfo =  myStore.orderCheck.orderInfo;
+        // state.orderInfo = route.params;  //OrderCheck페이지에서 주문조회클릭으로 넘어온 값 == 에러남
+        state.orderInfo =  myStore.orderCheck.orderInfo; //OrderCheck페이지에서 주문상세보기클릭으로 넘어온 값
         
-        // myStore.주문조회리스트로드();
+        const sumItemsOfPrice = computed(() => {    //받아온 주문상세의 각 상품들의 가격의 합
+            let sum = state.items.reduce((prev, currentv) => {
+                return Number(prev) + Number(currentv.product_price);
+            }, 0)
+            return sum;
+        })
         
         const 주문상세불러오기 = () => {
             proxy.$log('[OrderCheckDetail] 주문상세불러오기 state.orderInfo: ', state.orderInfo)
@@ -326,13 +331,14 @@ export default {
 
         //리뷰작성하기 클릭시
         const 리뷰작성하기 = (item) => {
-            window.scrollTo({ top: 0, behavior:'smooth'})
-            let doYouGo = confirm('리뷰를 작성했습니다. 확인하시겠습니까?');
-            if (doYouGo) {
-                router.push({name: 'productDetail', query: { product_no: item.product_no }}); //후기 작성 후 이동할지 물어보기
-
-            } else {
-                주문상세불러오기();
+            주문상세불러오기();
+            // window.scrollTo({ top: 0, behavior:'smooth'})
+            
+            if (item.is_review_created == "1") {
+                let doYouGo = confirm('리뷰를 작성했습니다. 확인하시겠습니까?');
+                if (doYouGo) {
+                    router.push({name: 'productDetail', query: { product_no: item.product_no }}); //후기 작성 후 이동할지 물어보기
+                } 
             }
         }
       
@@ -344,7 +350,7 @@ export default {
     
         return {
             ...toRefs(state),
-            store, myStore,  
+            store, myStore,  sumItemsOfPrice,
             imageLoad, goToPage, 리뷰작성하기, 주문상세이미지클릭
 
         }

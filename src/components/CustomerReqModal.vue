@@ -30,51 +30,33 @@
 
 
 <!-- 리뷰쓰기 모달전용 -->
-<slot name="reviewModal">
+<slot name="customerReqModal">
     <div class="min-h-[1300px] max-h-fit py-12 bg-gray-700 bg-opacity-30 transition duration-150 ease-in-out z-10 absolute top-0 right-0 bottom-0 left-0" id="modal">
-        <div role="alert" class="container mx-auto w-full md:w-5/6 max-w-4xl">
+        <div role="alert" class="container mx-auto w-full md:w-5/6 max-w-3xl">
             <div class="relative py-8 px-5 md:px-10 bg-white shadow-md rounded border border-gray-400">
                 <!-- 헤더 -->
                 
                 <h5 class="mb-5">
-                    {{ ($props.item == undefined)? '':$props.item.product_name }} 리뷰쓰기
-
+                    <!-- {{ ($props.item == undefined)? '':$props.item.product_name }}  -->
+                    고객요청사항
                 </h5>
                 <!-- <button @click="$emit('modalOff', false)">모달닫기테스트버튼</button> -->
-                <Qeditor class="w-full h-96 mb-5 bg-slate-50 overflow-auto" v-model="editor"></Qeditor>
+                
+                <div v-for="(minitem,index) in $props.item.order_qa_list" :key="minitem.order_qa_no">
+                    <div class="p-2 my-3 border-2">
+                        {{ minitem.order_qa_writer }}: {{ minitem.order_qa_content }}
+                    </div>
 
-                <div class="mb-2 text-gray-700 font-mono">
-                    평점남기기
                 </div>
-                <div class="flex flex-wrap mb-5">
-                    <div class="flex items-center mr-4">
-                        <input @click="평점남기기버튼클릭($event)" id="red-radio" type="radio" value="1" name="colored-radio" class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                        <label for="red-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">1점</label>
-                    </div>
-                    <div class="flex items-center mr-4">
-                        <input @click="평점남기기버튼클릭($event)"  id="green-radio" type="radio" value="2" name="colored-radio" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                        <label for="green-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">2점</label>
-                    </div>
-                    <div class="flex items-center mr-4">
-                        <input @click="평점남기기버튼클릭($event)"  id="purple-radio" type="radio" value="3" name="colored-radio" class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                        <label for="purple-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">3점</label>
-                    </div>
-                    <div class="flex items-center mr-4">
-                        <input @click="평점남기기버튼클릭($event)"  id="teal-radio" type="radio" value="4" name="colored-radio" class="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 focus:ring-teal-500 dark:focus:ring-teal-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                        <label for="teal-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">4점</label>
-                    </div>
-                    <div class="flex items-center mr-4">
-                        <input @click="평점남기기버튼클릭($event)"  checked="true" id="yellow-radio" type="radio" value="5" name="colored-radio" class="w-4 h-4 text-yellow-400 bg-gray-100 border-gray-300 focus:ring-yellow-500 dark:focus:ring-yellow-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                        <label for="yellow-radio" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">5점</label>
-                    </div>
-                </div>
+
+                          
 
     
                 <!-- 제출,취소버튼 -->
                 <div class="relative px-5 mx-auto max-w-screen-xl">
-                    <button @click="리뷰제출클릭($props.item)" class="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition duration-150 ease-in-out hover:bg-indigo-600 bg-indigo-700 rounded text-white px-8 py-2 text-sm">
+                    <!-- <button @click="리뷰제출클릭($props.item)" class="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition duration-150 ease-in-out hover:bg-indigo-600 bg-indigo-700 rounded text-white px-8 py-2 text-sm">
                         제출
-                    </button>
+                    </button> -->
                     <button class="focus:outline-none focus:ring-2 focus:ring-offset-2  focus:ring-gray-400 ml-3 bg-gray-100 transition duration-150 text-gray-600 ease-in-out hover:border-gray-400 hover:bg-gray-300 border rounded px-8 py-2 text-sm" 
                         @click="$emit('modalOff', false)">취소</button>
                 </div>
@@ -105,10 +87,9 @@ import { onMounted, reactive, ref, computed, readonly, toRefs } from 'vue'
 import http from '@/modules/http'
 import Qeditor from './Qeditor.vue';
 import { useLoginStore } from '@/stores/login';
-// import ReviewModalContent from './ReviewModalContent.vue';
 
 export default {
-    name: "ReviewModal",
+    name: "CustomerReqModal",
     components: { Qeditor },
     props: ["modelValue", "item"],
     emits: ["update:modelValue", "modalOff"],
@@ -147,15 +128,15 @@ export default {
                 review_grade: state.review_grade
 
             }).then((res) => {
-                console.log('[ReviewModal] 리뷰제출클릭 res: ', res.data);
+                console.log('[CustomerReqModal] 리뷰제출클릭 res: ', res.data);
                 context.emit('modalOff', false); //상위컴포넌트에 모달off하라는 이벤트전달
 
-            }).catch(error => console.log('[ReviewModal] 리뷰제출클릭 error: ', error.response.data))
+            }).catch(error => console.log('[CustomerReqModal] 리뷰제출클릭 error: ', error.response.data))
         }
 
-        const 평점남기기버튼클릭 = (e) => {
-            state.review_grade = e.target.value;
-        }
+        // const 평점남기기버튼클릭 = (e) => {
+        //     state.review_grade = e.target.value;
+        // }
 
 
 
@@ -164,9 +145,7 @@ export default {
             cancelClicked,
             propsModalC,
 
-            //리뷰 쓰기 모달 시작 부분 변수
-            ...toRefs(state),
-            리뷰제출클릭, 평점남기기버튼클릭
+          
         };
     },
     

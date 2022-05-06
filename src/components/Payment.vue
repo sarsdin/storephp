@@ -272,7 +272,7 @@ export default {
 
             //실제 복사하여 사용시에는 모든 주석을 지운 후 사용하세요
             window.BootPay.request({
-                price: Number(store.computedWholePrice ), //실제 결제되는 가격 + store.배송비계산
+                price: Number(store.computedWholePrice ) + 3000, //실제 결제되는 가격 + store.배송비계산
                 application_id: "625ea25f2701800020f69142",
                 name:  `${computedItemsInfo[0].product_name} 외 ${computedItemsInfo.length}건`, //결제창에서 보여질 이름
                 pg: 'kcp',
@@ -311,6 +311,16 @@ export default {
             }).error(function (data) {
                 //결제 진행시 에러가 발생하면 수행됩니다.
                 console.log(data);
+                http.get('/paymentc/cancelPaymentInProcessing', {
+                    params:{ order_no: order_no }
+                }).then((res) => {
+                    if (res.data.result == true) {
+                        proxy.$log('결제하기중 취소완료', res.data.result);
+                    } else {
+                        proxy.$log('결제하기중 취소실패', res.data.result);
+                    }
+                }).catch(error=>proxy.$log('결제하기중 취소 error: ', error.response.data));
+
             }).cancel(function (data) {
                 //결제가 취소되면 수행됩니다.
                 console.log(data);
@@ -351,7 +361,7 @@ export default {
                 //비즈니스 로직을 수행하기 전에 결제 유효성 검증을 하시길 추천합니다.
                 console.log('결제하기클릭 done: ',data);
                 store.rstate++;
-                let res = {
+                let resultEnd = {
                     computedItemsInfo: computedItemsInfo,  //결제에 사용했던 데이터(상품정보 등)
                     doneInfo: data                         //결제가 완료되고 부트페이에서 내려받은 결제완료정보
                 }
@@ -367,11 +377,11 @@ export default {
                     order_state: '결제완료',
                     card_name: data.card_name,
                     card_no: data.card_no,
-                    computedItemInfo: computedItemsInfo    
+                    computedItemsInfo: computedItemsInfo    
 
                 }).then((res) => {
                     console.log('결제하기클릭 done: ', res.data);
-                    router.push({name: 'paymentComplete', params: res });
+                    router.push({name: 'paymentComplete', params: resultEnd }); //params로 보내니깐 el에러남. 데이터는 넘어간다.
 
                 }).catch(error => console.log('결제하기클릭 done error: ', error.response.data))
 

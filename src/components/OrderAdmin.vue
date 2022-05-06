@@ -1,5 +1,5 @@
 <template>
-    <div class="flex relative w-full bg-airbus-3 text-white p-3 items-center rounded-b-md">
+    <div class="flex relative w-full bg-airbus-8 text-white p-3 items-center rounded-b-md">
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         <font-awesome-icon :icon="['fas', 'screwdriver-wrench']" class="text-6xl text-white"></font-awesome-icon>&nbsp;&nbsp;&nbsp;
         <div class="flex flex-col">
@@ -26,16 +26,35 @@
     </div>
 
     <!-- 내용시작 -->
-    <div class="flex w-full my-4 space-x-1">
-        <button @click="기간클릭(1)" class="px-2 py-1 border border-gray-700 rounded-full"
-        :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderCheckRangeCSS == 1 }"
-        >최근 1일</button>
-        <button @click="기간클릭(7)" class="px-2 py-1 border border-gray-700 rounded-full"
-        :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderCheckRangeCSS == 7 }"
-        >최근 7일</button>
-        <button @click="기간클릭(99)" class="px-4 py-1 border border-gray-700 rounded-full"
-        :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderCheckRangeCSS == 99 }"
-        >2022</button>
+    <div class="flex justify-between w-full my-4 space-x-1">
+        <div class="space-x-1">
+            <button @click="기간클릭(1)" class="px-2 py-1 border border-gray-700 rounded-full"
+            :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderCheckRangeCSS == 1 }"
+            >최근 1일</button>
+            <button @click="기간클릭(7)" class="px-2 py-1 border border-gray-700 rounded-full"
+            :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderCheckRangeCSS == 7 }"
+            >최근 7일</button>
+            <button @click="기간클릭(99)" class="px-4 py-1 border border-gray-700 rounded-full"
+            :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderCheckRangeCSS == 99 }"
+            >2022</button>
+        </div>
+        <div class="space-x-1">
+            <button @click="주문상태카테고리변경('결제완료')" class="px-2 py-1 border border-gray-700 rounded-full"
+            :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderStateRangeCSS == '결제완료' }"
+            >결제완료</button>
+            <button @click="주문상태카테고리변경('배송준비')" class="px-2 py-1 border border-gray-700 rounded-full"
+            :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderStateRangeCSS == '배송준비' }"
+            >배송준비</button>
+            <button @click="주문상태카테고리변경('배송중')" class="px-3 py-1 border border-gray-700 rounded-full"
+            :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderStateRangeCSS == '배송중' }"
+            >배송중</button>
+            <button @click="주문상태카테고리변경('배송완료')" class="px-2 py-1 border border-gray-700 rounded-full"
+            :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderStateRangeCSS == '배송완료' }"
+            >배송완료</button>
+            <button @click="주문상태카테고리변경('전체')" class="px-4 py-1 border border-gray-700 rounded-full"
+            :class="{ 'bg-blue-600 text-white': myStore.orderCheck.orderStateRangeCSS == '전체' }"
+            >전체</button>
+        </div>
     </div>
 
     <!-- 목록 시작 -->
@@ -44,7 +63,7 @@
         </div> -->
 
         <!-- 주문 목록 레이아웃 -->
-        <div v-for="item in myStore.orderCheckList" :key="item.order_no" class="flex justify-center">
+        <div v-for="(item, index) in myStore.orderCheckList" :key="item.order_no" class="flex justify-center">
             <div class="">
                 <!-- 목록 시작  v-for="item in myStore.orderCheckList" v-bind:key="item.product_name" -->
                 <div class="flex flex-col items-center w-[960px] max-w-[970px] min-w-[323px] px-2 py-7 mb-10 shadow-md border rounded-lg"> <!-- w-screen -->
@@ -61,25 +80,95 @@
                     <div class="flex w-[900px] p-4 border rounded-lg shadow-sm" >
 
                         <div class="flex flex-1">
-                            <img alt="이미지를 로드할 수 없습니다. 재시도 요망" :src="imageLoad(item)"
-                                class="object-cover mr-2 w-36 h-36 bg-slate-200 rounded-md"  />
+                            <!-- <img alt="이미지를 로드할 수 없습니다. 재시도 요망" :src="imageLoad(item)"
+                                class="object-cover mr-2 w-36 h-36 bg-slate-200 rounded-md"  /> -->
                             <!-- itemImgLoad != null? itemImgLoad:'https://img.apti.co.kr/aptHome/images/sub/album_noimg.gif'  -->
-                            <div class="ml-1 mt-2 text-xl">
+                            <div class="ml-1 mt-1 text-base">
                                 <div>
                                     {{ item.product_name }}
                                 </div>
-                                <div class="mt-5 text-gray-500">
+                                <div class="mt-1 text-gray-500">
                                     총 결제 금액: {{ Number(item.product_price).toLocaleString('ko-KR') }} 원
+                                </div>
+                                <div class="mt-1 text-gray-500">
+                                    결제일시: {{ item.purchased_at }}
+                                </div>
+                                <div class="mt-1 text-gray-500">
+                                    결제방법: {{ item.method }}
+                                </div>
+                                <div class="mt-1 text-gray-500">
+                                    결제카드: {{ item.card_name }}
+                                </div>
+                                <div class="mt-1 text-gray-500">
+                                    카드번호: {{ item.card_no }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-1">
+                            <!-- <img alt="이미지를 로드할 수 없습니다. 재시도 요망" :src="imageLoad(item)"
+                                class="object-cover mr-2 w-36 h-36 bg-slate-200 rounded-md"  /> -->
+                            <!-- itemImgLoad != null? itemImgLoad:'https://img.apti.co.kr/aptHome/images/sub/album_noimg.gif'  -->
+                            <div class="ml-1 mt-1 text-base">
+                                <div class="mt-1 text-gray-500">
+                                    영수증ID: {{ item.receipt_id }}
+                                </div>
+                                <div class="mt-1 text-gray-500">
+                                    주문회원ID: {{ item.user_id }}
+                                </div>
+                                <div class="mt-1 text-gray-500">
+                                    받는사람: {{ item.receiver_name }}
+                                </div>
+                                <div class="mt-1 text-gray-500">
+                                    배송지주소: {{ item.address1 + item.address2 }}
+                                </div>
+                                <div class="mt-1 text-gray-500">
+                                    연락처: {{ item.receiver_phone }}
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex flex-col justify-center items-center pl-4 w-56 h-full space-y-2 border-l-2">
-                            <div>
-                                <button class="w-48 py-2 text-blue-700 border border-blue-600 rounded"> {{ item.order_state }}</button>
+                        <div class="flex flex-col justify-center items-center pl-4 w-60 h-42 space-y-2 border-l-2">
+                                <!-- text-red-600 bg-gray-100 border-gray-300 focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 -->
+                                <!-- <button class="w-48 py-2 text-blue-700 border border-blue-600 rounded"> {{ item.order_state }}</button> -->
+                            <div class="flex flex-wrap py-2 w-48">
+                                <div class="flex items-center mr-4">
+                                    <input @click="주문상태변경(item,$event)" :checked="item.order_state=='결제완료'" :id="'red-radio'+index" type="radio" value="결제완료" :name="'colored-radio'+index" class="w-4 h-4" >
+                                    <label :for="'red-radio'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">결제완료</label>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <input @click="주문상태변경(item, $event)" :checked="item.order_state=='배송준비'" :id="'green-radio'+index" type="radio" value="배송준비" :name="'colored-radio'+index" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <label :for="'green-radio'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">배송준비</label>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <input @click="주문상태변경(item,$event)" :checked="item.order_state=='배송중'" :id="'purple-radio'+index" type="radio" value="배송중" :name="'colored-radio'+index" class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <label :for="'purple-radio'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">배송중</label>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <input @click="주문상태변경(item,$event)" :checked="item.order_state=='배송완료'" :id="'teal-radio'+index" type="radio" value="배송완료" :name="'colored-radio'+index" class="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 focus:ring-teal-500 dark:focus:ring-teal-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <label :for="'teal-radio'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">배송완료</label>
+                                </div>
                             </div>
-                            <div>
-                                <button @click="주문상세보기클릭(item)" class="w-48 py-2 text-blue-700 border border-blue-600 rounded">리뷰 작성하기</button>
+                            
+                            <div class="relative">
+                                <button @click="요청사항(item)" class="w-48 py-2 text-blue-700 border border-blue-600 rounded"
+                                >요청사항</button> 
+                                <!-- 요청사항 클릭시 isCustomerReqModalOpen = true 됨 -->
+
+                                <div v-if="item.order_qa_list.length > 0"
+                                class="absolute top-1 right-1 w-5 h-5 transform translate-x-1/2 -translate-y-1/2 bg-amber-400 text-base text-white font-semibold text-center leading-none rounded-full">
+                                    {{ item.order_qa_list.length }} 
+                                </div>
+
+                                <Teleport to="body">
+                                    <CustomerReqModal v-if="item.isCustomerReqModalOpen" :item="item" @modalOff="item.isCustomerReqModalOpen = false">
+                                        <template v-slot:customerReqModal >  
+                                            
+                                        
+                                        </template>
+                                    </CustomerReqModal>
+
+                                </Teleport>
+
                             </div>
                             <div>
                                 <button @click="주문취소클릭(item)" class="w-48 py-2 text-blue-700 border border-blue-600 rounded">주문취소</button>
@@ -146,9 +235,11 @@ import { useRouter } from 'vue-router'
 import http from '@/modules/http'
 import { useLoginStore } from '@/stores/login';
 import { useMyStore } from '@/stores/my';
+import CustomerReqModal from './CustomerReqModal.vue'
 
 export default {
-    name: 'OrderCheck',
+    name: 'OrderAdmin',
+    components: { CustomerReqModal },
     setup() {
         const {proxy} = getCurrentInstance();
         const store = useStore();
@@ -160,7 +251,7 @@ export default {
             count: 0,
         })
         
-        myStore.주문조회리스트로드();
+        myStore.주문관리리스트로드();
 
         //대표이미지 로딩
         const imageLoad = (item) => {
@@ -173,7 +264,12 @@ export default {
 
         const 기간클릭 = (기간) => {
             myStore.orderCheck.orderCheckRangeCSS = 기간;
-            myStore.주문조회리스트로드();
+            myStore.주문관리리스트로드();
+        }
+
+        const 주문상태카테고리변경 = (orderState) => {
+            myStore.orderCheck.orderStateRangeCSS = orderState;
+            myStore.주문관리리스트로드();
         }
 
         const 주문상세보기클릭 = (item) => {
@@ -186,14 +282,48 @@ export default {
         }
 
         const 주문취소클릭 = (item) => {
+            let cancel_msg = prompt('취소사유를 입력해주세요.');
             //todo: 주문취소처리
+            http.post('/paymentc/orderCancel', {
+                order_no: item.order_no,
+                receipt_id: item.receipt_id,
+                receiver_name: item.receiver_name,
+                cancel_msg: cancel_msg,
+                cancel_id: '',
+            }).then((res) => {
+                proxy.$log('[OrderAdmin] 주문취소클릭 res: ', res.data)
+                myStore.주문관리리스트로드();
+
+            }).catch(error=>console.log('[OrderAdmin] 주문취소클릭 error: ', error.response.data))
         }
+
+        const 주문상태변경 = (item, e) => {
+            let transport_code = '';
+            if (e.target.value == '배송중') {
+                transport_code = prompt('운송장번호를 입력해주세요.'); //배송중을 클릭하면 송장번호 입력창 뜨게끔.
+            }
+            item.order_state = e.target.value;
+            http.post('/paymentc/updateOrderState', {
+                order_state: item.order_state,
+                order_no : item.order_no,
+                transport_code: transport_code
+
+            }).then((res) => {
+                console.log('[OrderAdmin] 주문상태변경 res: ', res.data)
+
+            }).catch(error=>console.log('[OrderAdmin] 주문상태변경 error: ', error.response.data))
+        }
+
+        const 요청사항 = (item) => {
+            item.isCustomerReqModalOpen = true;
+        }
+
       
     
         return {
             ...toRefs(state),
             store, myStore,  
-            imageLoad, 기간클릭, 주문상세보기클릭, 주문취소클릭
+            imageLoad, 기간클릭, 주문상세보기클릭, 주문취소클릭, 주문상태변경, 주문상태카테고리변경, 요청사항
 
         }
     }
