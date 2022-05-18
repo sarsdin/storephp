@@ -25,12 +25,11 @@
                 <table class="min-w-full w-full divide-y divide-gray-200 table-fixed dark:divide-gray-700">
                     <thead class="bg-gray-100 dark:bg-gray-700">
                     <tr>
-                        <th scope="col" class="p-4 w-12">
+                        <!-- <th scope="col" class="p-4 w-12">
                             <div class="flex items-center">
                                 <input id="checkbox-search-all" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                <!-- <label for="checkbox-search-all" class="sr-only">checkbox</label> -->
                             </div>
-                        </th>
+                        </th> -->
                         <th scope="col" class="w-10 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
                             번호
                         </th>
@@ -58,13 +57,12 @@
                     <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
                     <!-- <router-link :to="{ name : 'noticeContent', params: { no: item.no } }"  class="w-full" > 이건 힘들지..css수정도 힘들고 -->
                         <tr v-for="item in addProduct" :key="item.product_no" @click="rowClicked(item, $event)" class="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                            <td class="p-4 w-4">
+                            <!-- <td class="p-4 w-4">
                                 <div class="flex items-center">
                                     <input @click="checkBoxClicked(item, $event)" type="checkbox" name="productDeleteSelectBox"
                                         class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                    <!-- <label for="checkbox-search-1" class="sr-only">checkbox</label> -->
                                 </div>
-                            </td>
+                            </td> -->
                             <td class="py-3 px-3 w-16 text-xs font-medium tracking-wider text-center text-gray-700 uppercase dark:text-gray-400">
                                 {{item.product_no}}
                             </td>
@@ -117,6 +115,30 @@
                     class="block w-60 pl-10 p-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="검색어 입력">
         </div>
+
+         <!-- 페이징 부분 -->
+        <div class="flex justify-center w-96">
+            <button v-if="addStore.pagingC.lastPage > 10 " @click="gotoClickedPage(1, $event)" class="mr-1" >
+                <font-awesome-icon class="text-gray-700" :icon="['fas', 'angles-left']"></font-awesome-icon>
+            </button> 
+
+            <button v-if="addStore.pagingC.prevPage != 0 " @click="gotoClickedPage(addStore.pagingC.prevPage, $event)" >
+                <font-awesome-icon class="text-gray-700" :icon="['fas', 'square-caret-left']"></font-awesome-icon>
+            </button> 
+            
+            <!-- @click시 store.rstate++을 이용해서 router-view를 갱신(리로드) 해주면 css를 바인딩으로 해결해야한다. 
+            이벤트target으로 css를 수정하면 수정하자마자 재랜더링때문에 적용이 풀린다. -->                                              
+            <button v-for="pageNumber in addStore.pagingC.linkArray" :key="pageNumber" :class="{'currentPagingCSS': addStore.classVar == pageNumber }"
+                @click="gotoClickedPage(pageNumber, $event)" 
+                class="text-gray-700 w-7 hover:text-blue-500 hover:font-semibold hover:text-lg">
+                {{ pageNumber }}
+            </button> 
+            
+            <button v-if="addStore.pagingC.lastPage < addStore.pagingC.totalPageCount" @click="gotoClickedPage(addStore.pagingC.nextPage, $event)" >
+                <font-awesome-icon class="text-gray-700" :icon="['fas', 'square-caret-right']"></font-awesome-icon>
+            </button>
+
+        </div>
         
     </div>
 
@@ -127,6 +149,8 @@
 <script>
 import { reactive, toRefs, ref, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAddStore } from '@/stores/addproduct'
+import { useStore } from '@/stores/store'
 import http from '../modules/http'
 import ProductModal from './ProductModal.vue'
 import ProductModalContent from './ProductModalContent.vue'
@@ -136,6 +160,8 @@ export default {
     name: 'AddProduct',
     components: { ProductModal, ProductModalContent, ProductModalUpdate },
     setup() {
+        const addStore = useAddStore();
+        const store = useStore();
         const openState = ref();  //modal이 클릭되어 오픈되어 있는지 여부상태 저장.
         const modalState = ref(); //modal이 클릭되는 버튼에 따라 다른 페이지를 오픈시킴.
         const passNoForUpdate = ref(); //updateModal이 열릴때 서버와 초기통신하기 위한 상품번호
@@ -148,15 +174,48 @@ export default {
         const { proxy } = getCurrentInstance();
 
         //상품 목록 로딩
-        http.get("/productc/pList").then(res => {
-            console.log("addProduct:res: ", res.data); //todo: res.data의 price속성들의 값에 , 자리수를 처리해야함.(미완료)
-            state.addProduct = res.data;
-            state.addProduct.forEach((item,i,origin) => {
-                origin[i].isDeleteChecked = false;
-            })
-        }).catch(error => console.log('[addProdcut] 상품목록로딩 error: ', error.response.data))
+        const 상품목록로드 = () => {
+            http.get("/productc/addProductList", {
+                params:{
+                    'dbEndNumber': addStore.pagingC.dbEndNumber,
+                    'dbStartNumber': addStore.pagingC.dbStartNumber,
+                    'searchValue': addStore.pagingC.addProductSearch,
+                    'searchType': addStore.pagingC.addProductSearchType,
+                }
+            }).then(res => {
+                console.log("[addProduct] res: ", res.data); //todo: res.data의 price속성들의 값에 , 자리수를 처리해야함.(미완료)
+                addStore.paging.totalItems = res.data.totalItems;
 
-        //검색버튼 엔터시
+                state.addProduct = res.data.result;
+                state.addProduct.forEach((item,i,origin) => {
+                    origin[i].isDeleteChecked = false;
+                })
+
+            }).catch(error => console.log('[addProdcut] 상품목록로딩 error: ', error.response.data))
+        }
+        상품목록로드();
+
+        const gotoClickedPage = (pageNumber, $event) => {
+            addStore.paging.currentPage = pageNumber;
+            $event.target.style.color = 'crimson';   //테스트용임. rstate++로 인해 작동안하는 중. 
+            addStore.classVar = pageNumber;
+            상품목록로드();
+
+            //query string이 없다면 addContent컴포넌트는 실행하지 않음.
+            store.rstate++;
+            // if (route.query.product_no != undefined || route.query.product_no != null) {
+            //     let params = {
+            //         name: 'addContent', 
+            //         query:{
+            //             product_no: route.query.product_no
+            //         }
+            //     }
+            //     // if (route.query.product_no) {}
+            //     router.push(params);
+            // }
+        }
+
+        //검색버튼 엔터시 -- 미완성
         const searchWord = () => {
             // console.log("noticeSearch: ", noticeSearch.value);
             // console.log("noticeSearchType: ", noticeSearchType.value);
@@ -242,19 +301,29 @@ export default {
 
 
         return {
-            ...toRefs(state),
+            ...toRefs(state), addStore,
             openState,
             modalState,
             searchType,
             search,
             passNoForUpdate,
-            searchWord, rowClicked, modifyClicked, inputNumberFormat, checkBoxClicked
+            searchWord, rowClicked, modifyClicked, inputNumberFormat, checkBoxClicked, gotoClickedPage
         };
     }
     
 }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
+
+.currentPagingCSS {
+    font-weight: 700;
+    font-size: larger;
+    text-decoration: underline;
+    
+    /* --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); */
+}
 
 </style>

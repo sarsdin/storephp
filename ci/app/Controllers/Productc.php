@@ -40,6 +40,88 @@ class Productc extends Controller
         return $res->setJSON($resData);
     }
 
+    //상품 전체 리스트 가져오기
+    public function addProductList() :ResponseInterface
+    {
+        $req = $this->request; //get() - 응답줄 url을 입력하면 response interface객체를 반환함
+        $res = $this->response;
+        $product = new Product();
+        $productImg = new Product_image();
+
+        $data = $req->getVar();
+        $totalItems = 0;
+
+        try {
+            $namedBinding = [
+                'searchValue' => $data['searchValue'],
+                'searchType' => $data['searchType'],
+                'dbStartNumber' => $data['dbStartNumber'],
+                'dbEndNumber' => $data['dbEndNumber'],
+            ];
+            log_message("debug", '[Productc] addProductList $namedBinding: '.print_r($namedBinding, true));
+
+            $sql = " select * from (
+                            select @rownum:=@rownum+1 as rownum, i.* from (
+                                select * from product 
+                                where
+                                    case
+                                        when :searchValue: != '' 
+                                        then 
+                                            case
+                                                when :searchType: = '제목' then product_name like concat_ws(:searchValue: , '%', '%')
+                                                when :searchType: = '내용' then product_desc like concat_ws(:searchValue: , '%', '%')
+                                            end
+                                        else 1=1
+                                    end 
+                                order by product_name
+                            ) i, (select @rownum:=0) tmp ) o
+                        where o.rownum between :dbStartNumber: and :dbEndNumber: ";
+
+            $sqlForCount = " select * from product 
+                                where
+                                    case
+                                        when :searchValue: != '' 
+                                        then 
+                                            case
+                                                when :searchType: = '제목' then product_name like concat_ws(:searchValue: , '%', '%')
+                                                when :searchType: = '내용' then product_desc like concat_ws(:searchValue: , '%', '%')
+                                            end
+                                        else 1=1
+                                    end  ";
+
+            $result = $product->db->query($sql, $namedBinding);
+
+//            log_message("debug", "[Productc] headerSearch:\$result->getResult(): ".print_r($result->getResult(), true));
+//            log_message("debug", "[Productc] headerSearch:\$result->getResultArray(): ".print_r($result->getResultArray(), true));
+            $result2 = $product->db->getLastQuery();
+            log_message("debug", "[Productc] addProductList getLastQuery(): ".print_r($result2, true));
+
+            $resData = $result->getResultArray();
+            $totalItems = $product->db->query($sqlForCount, $namedBinding)->getNumRows();
+
+            //완료된 쿼리로부터 받은 상품리스트의 각 상품마다 순회하여 상품이미지를 추가함
+            for ($i=0; $i<count($resData); $i++) {
+                $product_image = $productImg->where('product_no', $resData[$i]['product_no'])->findColumn('stored_file_name');
+                $resData[$i]['product_image'] = $product_image;
+            }
+//            log_message("debug", '[Productc]:headerSearch $resData[$i] : '.print_r($resData, true));
+
+            log_message("debug", '[Productc] addProductList resData: '.print_r($resData, true));
+
+            //결과 반환
+            return $res->setJSON([
+                'result' => $resData,
+                'totalItems' => $totalItems,
+                'msg' => $product->errors()
+            ]);
+
+        } catch(\ReflectionException | DataException $e){
+            return $res->setJSON($e->getMessage());
+        }
+    }
+
+
+
     //todo: megamenu누를시 해당하는 메뉴의 카테고리 데이터를 전달하는 메소드 작성하기. (완료)
     public function menuProductList() :ResponseInterface
     {
@@ -127,7 +209,7 @@ class Productc extends Controller
             log_message("debug", "productAdd:\$result: ".print_r($result, true));
 
             if ($result === false) {
-                $product->db->transComplete(); //실패시 롤백
+                $product->db->transComplete(); //실패시 롤백하도록 transRollback()을 밑에 배치해야됨. --아직 안함
                 return $res->setJSON([
                     'result' => $result,
                     'msg' => $product->errors()

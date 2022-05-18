@@ -619,7 +619,7 @@ class Paymentc extends Controller
                             when :order_state: != '전체' 
                             then order_state = :order_state:
                             else 1=1
-                        end  ";
+                        end order by order_date desc ";
         //: << 바인딩 오류는 ide 의 valid engine 문제, != '99' 는 프론트에서 99일이라는 값은 2022년이라는 카테고리를 가리키고있기때문에 99가 아니면 반드시 참으로 첫번째 명령이 실행됨.
 
         try {

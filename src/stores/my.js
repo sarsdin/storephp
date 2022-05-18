@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import http from '@/modules/http';
 import { useLoginStore } from "@/stores/login";
+import { useStore } from "@/stores/store";
 
 export const useMyStore = defineStore('myStore', {
     
@@ -8,7 +9,7 @@ export const useMyStore = defineStore('myStore', {
         return {
             orderCheck:{
                 orderCheckRangeCSS: 1,
-                orderStateRangeCSS: '결제완료',
+                orderStateRangeCSS: '',
                 orderInfo: {}           //주문상세조회 클릭시 해당 주문(아이템)의 정보가 저장되는 변수
             },
 
@@ -35,6 +36,7 @@ export const useMyStore = defineStore('myStore', {
 
         주문관리리스트로드(orderState){
             const userInfo = useLoginStore();
+            const store = useStore();
             http.post('/paymentc/getOrderCheckAdminList', {
                 user_id: userInfo.info.id,
                 date_range: this.orderCheck.orderCheckRangeCSS,  //주문조회페이지에서 기간버튼의 활성이 어느것이냐에 따라 불러오는 데이터의 범위가 달라짐
