@@ -377,6 +377,7 @@ class Home extends BaseController
     {
         $db = \Config\Database::connect();
         $notice = new Notice();
+        $notice_reply = new Notice_reply();
         $res = $this->response;
         $req = $this->request;
 //        $resData = $notice->findAll();
@@ -434,11 +435,16 @@ class Home extends BaseController
             $result2 = $notice->db->getLastQuery();
             log_message("debug", "notice:\$result22: ".print_r($result2, true));
 
+            $result = $result->getResultArray();
+            for($i=0; $i<count($result); $i++){
+                $tmpReplyCount = $notice_reply->where('notice_no', $result[$i]['notice_no'])->countAllResults();
+                $result[$i]['notice_reply_count'] = $tmpReplyCount;
+            }
 
 
             //결과 반환
             return $res->setJSON([
-                'result' => $result->getResultArray(),
+                'result' => $result,
                 'totalItems' => $totalItems,
                 'msg' => $notice->errors()
             ]);
@@ -446,7 +452,17 @@ class Home extends BaseController
         } catch(\ReflectionException | DataException $e){
             return $res->setJSON($e->getMessage());
         }
+    }
 
+    //noticeRow 리플 수 반환
+    public function rowReplyCount() : ResponseInterface
+    {
+        $notice_reply = new Notice_reply();
+        $data = $this->request->getVar();
+        $res = $this->response;
+
+        $resData = $notice_reply->where('notice_no', $data['notice_no'])->countAllResults();
+        return $res->setJSON($resData);
     }
 
     //noticeContent 글 상세페이지 불러오기

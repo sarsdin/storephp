@@ -76,7 +76,9 @@
                                     {{item.notice_no}}
                                 </th>
                                 <td class="py-4 px-6 w-96 text-sm font-medium text-gray-900 whitespace-nowrap text-ellipsis overflow-hidden dark:text-white">
-                                    {{item.notice_title}}
+                                    {{item.notice_title}}&nbsp;
+                                    <span class="text-xs text-blue-400">{{ item.notice_reply_count? item.notice_reply_count:'' }}</span>
+                                    
                                 </td>
                                 <td class="py-4 px-6 text-sm text-center font-medium text-gray-500 whitespace-nowrap dark:text-white">
                                     {{item.notice_writer}}
@@ -120,7 +122,7 @@
             </div>
 
             <!-- 페이징 부분 -->
-            <div class="flex justify-evenly w-96 ml-20">
+            <div class="flex justify-center w-96 ml-20">
                 <button v-if="noticeStore.pagingC.lastPage > 10 " @click="gotoClickedPage(1, $event)" class="mr-1" >
                     <font-awesome-icon class="text-gray-700" :icon="['fas', 'angles-left']"></font-awesome-icon>
                 </button> 

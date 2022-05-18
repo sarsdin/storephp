@@ -132,19 +132,23 @@
                                 <!-- <button class="w-48 py-2 text-blue-700 border border-blue-600 rounded"> {{ item.order_state }}</button> -->
                             <div class="flex flex-wrap py-2 w-48">
                                 <div class="flex items-center mr-4">
-                                    <input @click="주문상태변경(item,$event)" :checked="item.order_state=='결제완료'" :id="'red-radio'+index" type="radio" value="결제완료" :name="'colored-radio'+index" class="w-4 h-4" >
+                                    <input @click="주문상태변경(item,$event)" :id="'red-radio'+index" type="radio" value="결제완료" 
+                                    :checked="item.order_state=='결제완료'" class="w-4 h-4" >
                                     <label :for="'red-radio'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">결제완료</label>
                                 </div>
                                 <div class="flex items-center mr-4">
-                                    <input @click="주문상태변경(item, $event)" :checked="item.order_state=='배송준비'" :id="'green-radio'+index" type="radio" value="배송준비" :name="'colored-radio'+index" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <input @click="주문상태변경(item, $event)" :id="'green-radio'+index" type="radio" value="배송준비"  
+                                    :checked="item.order_state=='배송준비'" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                     <label :for="'green-radio'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">배송준비</label>
                                 </div>
                                 <div class="flex items-center mr-4">
-                                    <input @click="주문상태변경(item,$event)" :checked="item.order_state=='배송중'" :id="'purple-radio'+index" type="radio" value="배송중" :name="'colored-radio'+index" class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <input @click="주문상태변경(item,$event)" :id="'purple-radio'+index" type="radio" value="배송중"  
+                                    :checked="item.order_state=='배송중'" class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                     <label :for="'purple-radio'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">배송중</label>
                                 </div>
                                 <div class="flex items-center mr-4">
-                                    <input @click="주문상태변경(item,$event)" :checked="item.order_state=='배송완료'" :id="'teal-radio'+index" type="radio" value="배송완료" :name="'colored-radio'+index" class="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 focus:ring-teal-500 dark:focus:ring-teal-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    <input @click="주문상태변경(item,$event)" :id="'teal-radio'+index" type="radio" value="배송완료"  
+                                    :checked="item.order_state=='배송완료'" class="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 focus:ring-teal-500 dark:focus:ring-teal-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                                     <label :for="'teal-radio'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">배송완료</label>
                                 </div>
                             </div>
@@ -268,6 +272,7 @@ export default {
         }
 
         const 주문상태카테고리변경 = (orderState) => {
+            store.rstate++;
             myStore.orderCheck.orderStateRangeCSS = orderState;
             myStore.주문관리리스트로드();
         }
